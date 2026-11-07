@@ -253,6 +253,15 @@ Keep `entailment=False` as the default. `lexical AND judge` is available (`entai
 high-precision / low-recall mode, appropriate when a false claim is worse than a missing one.
 Not adopting the judge by default avoids claiming an improvement the data do not establish.
 
+## Iteration 10: re-run with Spanish facts (held-out set)
+- Data fix: one article in `data/reforma_pensional.json` (El Colombiano) had mojibake from the old download
+  code. Only its `text` was replaced with the correctly decoded version; every other article is unchanged.
+  This changes that one input relative to runs 1-3.
+- `notebooks/diag_es_kaggle.ipynb` re-runs Qwen 3B (writer) + Qwen 7B (verifier) with the fixed Summarizer
+  and the new verifier defaults (no name filter, quotes >= 100 chars) and builds a new labelling sheet.
+  Grounding is **not** comparable with runs 1-3 because the verification rules changed.
+- Purpose: a held-out sample to validate the rules and the judge that were tuned on the first 49 facts.
+
 ## Next steps (in order)
 1. [x] Stricter verification in code (numbers / proper nouns in the quote, reject headline echoes).
 2. [x] Reproducible benchmark: harness + run 1 done (see above).
