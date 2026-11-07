@@ -109,3 +109,18 @@ def test_fixed_verifier_is_used_for_fact_checking():
     r = run_newsroom("dólar", writer, articles=arts, verbose=False, verifier_llm=checker)
     assert r.grounding_rate == 1.0
     assert len(checker.calls) == 1 and len(writer.calls) == 2
+
+
+def test_numbers_are_separator_insensitive_and_whole():
+    from newsroom.agents import numbers_missing
+    assert numbers_missing("más de 765,000 reclamaciones", "registró 765.000 reclamaciones") == []
+    assert numbers_missing("2,3 salarios", "hasta 2.3 salarios") == []
+    assert numbers_missing("23 casos", "ocurrió en 2023") == ["23"]   # not a substring match
+    assert numbers_missing("el 81% de las empresas", "cerca del 82% de las empresas") == ["81"]
+
+
+def test_summarizer_keeps_article_language_and_english_is_flagged():
+    from newsroom.agents import Summarizer, looks_english
+    assert "SAME LANGUAGE" in Summarizer.system
+    assert looks_english("The reform was approved in the Chamber of Representatives")
+    assert not looks_english("La reforma fue aprobada en la Cámara de Representantes")

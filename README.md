@@ -37,6 +37,10 @@ for all of them (**fixed verifier**), which isolates generation quality.
 | Qwen2.5-7B-Instruct | 0.32 | 0.32 | 21 / 65 | 1.00 | 0/16 |
 | Phi-3.5-mini-instruct | 0.20 | **0.41** | **28 / 69** | 0.94 | 1/16 |
 
+> **These numbers are provisional.** A diagnostic run showed that 32 of 51 facts were written in English
+> for Spanish articles and that number formatting (`765,000` vs `765.000`) caused false drops. Both are
+> fixed in the code; the benchmark has not been re-run since. See the DEVLOG.
+
 What this shows, and what it does not:
 - The ranking depends on who verifies, so self-verified scores should not be used to compare generators.
 - Runs are deterministic: repeating a configuration gives identical numbers.

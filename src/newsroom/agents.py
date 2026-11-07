@@ -30,7 +30,9 @@ class Researcher:
 
 class Summarizer:
     system = (
-        "You summarise a news article. Use ONLY information in the article. Reply with ONLY JSON: "
+        "You summarise a news article. Use ONLY information in the article. Write the summary and every "
+        "fact in the SAME LANGUAGE as the article (Spanish article -> Spanish text); never translate. "
+        "Reply with ONLY JSON: "
         '{"summary": "2-3 sentences", "key_facts": ["short, self-contained, verifiable fact", ...]} '
         "with at most 4 key facts, each containing concrete details (who/what/when/numbers)."
     )
@@ -64,10 +66,29 @@ def quote_in_text(quote: str, text: str, min_ratio: float = 0.8) -> bool:
 _NUM = re.compile(r"\d[\d.,]*")
 
 
+def _digits(s: str) -> str:
+    """Drop thousands/decimal separators so '765,000' == '765.000' == '765000'."""
+    return re.sub(r"[.,]", "", s)
+
+
 def numbers_missing(claim: str, text: str) -> list[str]:
-    """Numbers in the claim that do not appear in `text` (a quote or the whole source)."""
-    t = _norm(text)
-    return [n for n in _NUM.findall(claim) if _norm(n).strip(".,") not in t]
+    """Numbers in the claim that do not appear in `text` (a quote or the whole source).
+    Separator-insensitive, and whole-number only (so '23' does not match inside '2023')."""
+    t = _digits(_norm(text))
+    missing = []
+    for n in _NUM.findall(claim):
+        d = _digits(_norm(n).strip(".,"))
+        if d and not re.search(rf"(?<!\d){re.escape(d)}(?!\d)", t):
+            missing.append(n)
+    return missing
+
+
+_EN_WORDS = re.compile(r"\b(the|of|and|to|was|were|that|in|for|with|by|from|has|have|will)\b", re.I)
+
+
+def looks_english(text: str) -> bool:
+    """Cheap heuristic used only for diagnostics: is this fact written in English?"""
+    return len(_EN_WORDS.findall(text)) >= 2
 
 
 def names_missing(claim: str, text: str) -> list[str]:
@@ -115,6 +136,7 @@ class Verifier:
             q = quotes.get(i)
             # Every signal is recorded separately so alternative filter rules can be evaluated offline.
             ev = {"article": a.title[:70], "fact": f, "quote": q, "headline_echo": is_headline_echo(f, a.title),
+                  "fact_looks_english": looks_english(f),
                   "quote_in_source": None, "numbers_missing_in_quote": None, "names_missing_in_quote": None,
                   "numbers_missing_in_source": numbers_missing(f, a.text),
                   "names_missing_in_source": names_missing(f, a.text)}

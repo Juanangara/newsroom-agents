@@ -143,6 +143,43 @@ Drop reasons (same run): `details_missing` 32 / 36 / 37, `quote_not_in_source` 1
   evaluated offline without GPU time.
 - New "diagnostic run" cell in the benchmark notebook (3B only, ~15 min).
 
+## Diagnostic run: what the dropped facts actually were (Qwen 3B writer, Qwen 7B verifier, 51 facts)
+Raw data: `results/benchmark_diag.json` (`evidence` holds the quote and every check for each fact).
+
+Drop reasons: `name_missing` 26, `number_missing` 6, `no_quote` 2, `quote_not_in_source` 1; 16 supported.
+
+### Findings
+1. **32 of the 51 facts were written in English although every article is Spanish.** The Summarizer prompt
+   is English and the 3B model answered in English. A proper-noun check of an English claim ("Constitutional
+   Court", "Congress", "April") against a Spanish quote can never pass. This was a pipeline bug, not
+   hallucination.
+2. **Number formatting caused false drops:** `765,000` in the fact vs `765.000` in the quote (also `40,316`
+   vs `40.316`).
+3. **The name filter is not simply "too strict".** Offline re-evaluation of alternative rules on the same 51
+   facts:
+
+   | Rule | Supported |
+   |---|---|
+   | current (numbers + names vs quote) | 16 / 51 |
+   | + separator-insensitive numbers | 18 / 51 |
+   | names checked against the whole source instead of the quote | 25 / 51 |
+   | numbers only, no name check | 45 / 51 |
+
+   Dropping the name check entirely admits unsupported claims, e.g. "the reform avoided a conflict with
+   the Senate despite requests from the Ministry of Finance", backed by a quote about fiscal cost that says
+   nothing of the sort. Some of what the name check caught was genuine.
+4. **Consequence:** the grounding numbers in runs 1-3 mix model quality with these two bugs. The fixed-verifier
+   ranking (Phi > 7B > 3B) should be treated as provisional until re-measured.
+5. We cannot choose between filter rules without ground truth: a hand-labelled sample of facts
+   (supported / not supported) would let us measure precision and recall of each rule.
+
+## Iteration 8: fix the root causes
+- The Summarizer must write in the article's language (never translate).
+- Numbers are compared ignoring thousands/decimal separators and as whole numbers (`23` no longer matches
+  inside `2023`).
+- Evidence now also records `fact_looks_english` to catch any language mismatch that remains.
+- 13 unit tests. **Not yet re-run on Colab.**
+
 ## Next steps (in order)
 1. [x] Stricter verification in code (numbers / proper nouns in the quote, reject headline echoes).
 2. [x] Reproducible benchmark: harness + run 1 done (see above).
