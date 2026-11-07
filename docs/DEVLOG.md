@@ -284,6 +284,33 @@ Fix:
 - Rubric: added the `no_quote` tag.
 - 21 unit tests. **Not yet re-run on Colab/Kaggle with a real model.**
 
+## Round 2 labels: 41 Spanish facts, labelled with the written rubric
+Labels: `results/labeling/labels_filled_es.csv` (32 supported, 9 not supported, 3 skipped). Written rubric:
+`results/labeling/RUBRIC.md`. Five labels were revised after an inconsistency review (rows that contradicted the
+rubric, e.g. "entered in 2026" vs "early 2026"); that review was prompted by the assistant, so the revision is itself
+a source of influence.
+
+| Rule | Accepts | Precision | Recall | False accepts |
+|---|---|---|---|---|
+| no filter (verifier's quote only) | 35 | 0.80 | 0.88 | 7 |
+| numbers only | 35 | 0.80 | 0.88 | 7 |
+| numbers + names vs quote (old default) | 26 | 0.81 | 0.66 | 5 |
+| numbers + quote >= 100 chars (current default) | 34 | 0.79 | 0.84 | 7 |
+
+Base rate (a verifier quote that really supports its fact): **0.78** [0.63, 0.88], against 0.61 [0.47, 0.74] in
+round 1.
+
+### Findings
+1. **Spanish facts were better supported** (0.78 vs 0.61), consistent with the language bug having depressed round 1.
+   Not a clean comparison: the rubric was explicit and looser in round 2 (vaguer-than-the-quote is acceptable), and
+   labels were revised.
+2. **On Spanish facts the cheap rules do nothing.** The current default removes 1 of 35 accepted facts; 7 of the 9
+   unsupported facts pass. Round 1's gain from quote length (0.60 -> 0.69) did not reproduce: it was tuned on that
+   sample, as warned.
+3. **The unsupported facts here are semantic errors** (tags: add_info 4, truncated 1, no_quote 1, actor 1, compound 1,
+   topic_only 1). No lexical rule can see them. This is the case for the meaning-level judge, which is the one
+   component that has not yet been tested on held-out data.
+
 ## Next steps (in order)
 1. [x] Stricter verification in code (numbers / proper nouns in the quote, reject headline echoes).
 2. [x] Reproducible benchmark: harness + run 1 done (see above).

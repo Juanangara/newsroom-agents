@@ -29,8 +29,10 @@ RULES = {
     "numbers only": lambda e: base(e) and not numbers_missing(e["fact"], e["quote"]),
     "numbers + names vs source": lambda e: base(e) and not numbers_missing(e["fact"], e["quote"])
     and not e["names_missing_in_source"],
-    "numbers + names vs quote (current)": lambda e: base(e) and not numbers_missing(e["fact"], e["quote"])
+    "numbers + names vs quote (old default)": lambda e: base(e) and not numbers_missing(e["fact"], e["quote"])
     and not names_missing(e["fact"], e["quote"]),
+    "numbers + quote >= 100 chars (current default)": lambda e: base(e) and len(e["quote"]) >= 100
+    and not numbers_missing(e["fact"], e["quote"]),
 }
 
 labels = {}
