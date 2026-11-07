@@ -20,6 +20,7 @@ Judge whether the quote supports the fact, not whether the fact is true in the w
 | `topic_only` | Same topic, but the quote does not say it. |
 | `truncated` | The quote is cut off or too fragmentary. |
 | `compound` | Multi-part fact where only one part is supported. |
+| `no_quote` | The verifier gave no quote at all (nothing to support the fact). |
 
 ## `?` - skipped
 - The subject is only identified through a pronoun or an antecedent outside the quote.

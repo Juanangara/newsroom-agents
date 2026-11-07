@@ -17,6 +17,8 @@ class ArticleSummary(BaseModel):
     url: str
     summary: str
     key_facts: list[str] = Field(default_factory=list)
+    # facts the writer model left unfinished; removed before verification
+    discarded_incomplete: list[str] = Field(default_factory=list)
 
 
 class VerifiedSummary(ArticleSummary):

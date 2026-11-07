@@ -39,9 +39,10 @@ def run_newsroom(topic: str, llm: LLM, max_articles: int = 5, verbose: bool = Tr
         step("summarizer+verifier", article=i, kept=len(v.supported_facts), dropped=len(v.dropped_facts))
         verified.append(v)
 
-    md = Editor(llm).run(topic, verified)
+    editor = Editor(llm)
+    md = editor.run(topic, verified)
     cov = citation_coverage(md)
-    step("editor", chars=len(md), citation_coverage=round(cov, 2))
+    step("editor", chars=len(md), citation_coverage=round(cov, 2), summary_grounded=editor.summary_grounded)
 
     facts = sum(len(v.supported_facts) + len(v.dropped_facts) for v in verified)
     ok = sum(len(v.supported_facts) for v in verified)

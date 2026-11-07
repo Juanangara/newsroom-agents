@@ -28,13 +28,36 @@ class Researcher:
         return [fetch_text(a) for a in (chosen or cands[: self.max])]
 
 
+_DANGLING = {
+    # Spanish function words a complete fact does not end with
+    "el", "la", "los", "las", "un", "una", "unos", "unas", "de", "del", "al", "en", "con", "por", "para",
+    "que", "como", "y", "e", "o", "u", "a", "su", "sus", "lo", "se", "sobre", "entre", "desde", "hasta",
+    "según", "sin", "tras", "ante", "ni", "si", "cuando", "donde", "porque",
+    # English
+    "the", "of", "and", "to", "in", "for", "with", "by", "from", "an", "that", "which", "or",
+}
+_INTERROGATIVES = {"cómo", "qué", "cuándo", "dónde", "cuál", "cuáles", "quién", "quiénes"}
+
+
+def is_incomplete_fact(fact: str) -> bool:
+    """Heuristic for facts the writer model cut off mid-sentence ("... explorar cómo la tecnología").
+
+    Catches: fewer than 4 words, ending in a function word, or an interrogative opening a clause in the
+    last three words. It cannot catch every truncation."""
+    words = re.findall(r"[\wÁÉÍÓÚÑáéíóúñ]+", fact)
+    if len(words) < 4 or words[-1].lower() in _DANGLING:
+        return True
+    return any(w.lower() in _INTERROGATIVES for w in words[-3:])
+
+
 class Summarizer:
     system = (
         "You summarise a news article. Use ONLY information in the article. Write the summary and every "
         "fact in the SAME LANGUAGE as the article (Spanish article -> Spanish text); never translate. "
         "Reply with ONLY JSON: "
         '{"summary": "2-3 sentences", "key_facts": ["short, self-contained, verifiable fact", ...]} '
-        "with at most 4 key facts, each containing concrete details (who/what/when/numbers)."
+        "with at most 4 key facts, each containing concrete details (who/what/when/numbers). "
+        "Every fact must be a COMPLETE sentence with a subject and a verb; never cut a sentence short."
     )
 
     def __init__(self, llm: LLM):
@@ -42,9 +65,11 @@ class Summarizer:
 
     def run(self, idx: int, a: Article) -> ArticleSummary:
         data = chat_json(self.llm, self.system, f"Title: {a.title}\n\nArticle:\n{a.text}", max_tokens=500)
+        facts = [str(f).strip() for f in data.get("key_facts", [])]
         return ArticleSummary(
-            article_id=idx, title=a.title, url=a.url,
-            summary=str(data.get("summary", "")), key_facts=[str(f) for f in data.get("key_facts", [])],
+            article_id=idx, title=a.title, url=a.url, summary=str(data.get("summary", "")),
+            key_facts=[f for f in facts if not is_incomplete_fact(f)],
+            discarded_incomplete=[f for f in facts if is_incomplete_fact(f)],
         )
 
 
@@ -203,28 +228,76 @@ class Verifier:
                                drop_reasons=reasons, evidence=evidence)
 
 
+def _inner_names(text: str) -> list[str]:
+    """Capitalised words that do not start a sentence (proper-noun candidates)."""
+    return re.findall(r"(?<=[^\s.!?¿¡])\s+([A-ZÁÉÍÓÚÑ][\wáéíóúñ]+)", text)
+
+
 class Editor:
+    """Builds the report mostly in code, so the model cannot alter what the Verifier approved.
+
+    - Bullets are the verified facts themselves, each with its `[n]` citation (written by code).
+    - The model only proposes a title and a short summary. Both are discarded if they introduce a number
+      or a proper noun that is not in the verified facts (an earlier run had it expand "Ministerio TIC" into
+      a ministry name that appears nowhere in the sources).
+    - The summary cites every source used, because it is derived from all of them.
+    """
+
     system = (
-        "Eres un editor de noticias. Redacta un informe breve en español usando EXCLUSIVAMENTE los hechos "
-        "verificados que se te dan. Formato: un título (#), un resumen ejecutivo de 2 frases, y luego viñetas "
-        "con '- '. CADA frase y CADA viñeta debe terminar con la cita de su fuente, por ejemplo [1] o [2]. "
-        "No añadas nada que no esté en los hechos."
+        "Eres un editor de noticias. Con los hechos verificados que se te dan, responde SOLO con un JSON: "
+        '{"title": "título corto", "summary": "resumen de máximo 2 frases"}. '
+        "Usa exclusivamente información de los hechos: no añadas cifras, nombres propios, siglas "
+        "expandidas ni explicaciones que no estén en ellos. Escribe en español."
     )
 
     def __init__(self, llm: LLM):
         self.llm = llm
+        self.summary_grounded = True  # False if the model's summary had to be discarded
+
+    @staticmethod
+    def _ungrounded(text: str, allowed: str) -> bool:
+        """True if `text` contains a number or a proper noun that is not in `allowed`."""
+        allowed_n = _norm(allowed)
+        return bool(numbers_missing(text, allowed)) or any(_norm(w) not in allowed_n for w in _inner_names(text))
 
     def run(self, topic: str, items: list[VerifiedSummary]) -> str:
         usable = [(i, v) for i, v in enumerate(items) if v.supported_facts]
+        title = topic[:1].upper() + topic[1:]
         if not usable:
-            return f"# {topic}\n\nNo se encontraron hechos verificables.\n"
-        blocks = "\n\n".join(
-            f"Fuente [{i + 1}] {v.title}\nHechos verificados:\n" + "\n".join(f"- {f}" for f in v.supported_facts)
-            for i, v in usable
-        )
-        body = self.llm.chat(self.system, f"Tema: {topic}\n\n{blocks}", max_tokens=900)
+            return f"# {title}\n\nNo se encontraron hechos verificables.\n"
+
+        facts_text = " ".join(f for _, v in usable for f in v.supported_facts)
+        listing = "\n".join(f"- {f}" for _, v in usable for f in v.supported_facts)
+        try:
+            data = chat_json(self.llm, self.system, f"Tema: {topic}\n\nHechos verificados:\n{listing}", max_tokens=300)
+        except ValueError:
+            data = {}
+        data = data if isinstance(data, dict) else {}
+        new_title, summary = str(data.get("title", "")).strip(), str(data.get("summary", "")).strip()
+
+        allowed = f"{facts_text} {topic}"
+        self.summary_grounded = True
+        if summary and self._ungrounded(summary, allowed):
+            summary, self.summary_grounded = "", False
+        if new_title and not self._ungrounded(new_title, allowed):
+            title = new_title
+
+        bullets, seen = [], []
+        for i, v in usable:
+            for f in v.supported_facts:
+                text = f.strip().rstrip(".")
+                if any(SequenceMatcher(None, _norm(text), _norm(s)).ratio() > 0.9 for s in seen):
+                    continue  # near-duplicate of a fact already listed
+                seen.append(text)
+                bullets.append(f"- {text} [{i + 1}]")
+
+        cites = " ".join(f"[{i + 1}]" for i, _ in usable)
+        parts = [f"# {title}"]
+        if summary:
+            parts.append(f"{summary} {cites}")
+        parts.append("\n".join(bullets))
         refs = "\n".join(f"[{i + 1}] {v.title} — {v.url}" for i, v in usable)
-        return f"{body}\n\n## Fuentes\n{refs}\n"
+        return "\n\n".join(parts) + f"\n\n## Fuentes\n{refs}\n"
 
 
 def citation_coverage(markdown: str) -> float:

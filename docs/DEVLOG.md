@@ -262,6 +262,28 @@ Not adopting the judge by default avoids claiming an improvement the data do not
   Grounding is **not** comparable with runs 1-3 because the verification rules changed.
 - Purpose: a held-out sample to validate the rules and the judge that were tuned on the first 49 facts.
 
+## Iteration 11: the Editor can no longer rewrite verified facts
+Found by reading the Spanish re-run's reports (not by a metric):
+- Citation coverage fell to 0.56: for one topic the 3B Editor wrote eight bullets with no citation (0.11), for the
+  other no bullets at all. The model does not follow the format reliably.
+- More serious: the Editor added content that was never verified, e.g. it expanded "Ministerio TIC" into a
+  ministry name that appears in none of the sources, plus an unverified generalisation about "fraud and security".
+  Verification means little if the last step can rewrite.
+
+Fix:
+- **Bullets are now written by code**: each is a verified fact plus its `[n]`. Near-duplicates are removed.
+- The model only proposes a title and a short summary. They are discarded if they contain a number or a proper noun
+  absent from the verified facts (`Editor.summary_grounded` records it; it appears in the trace). The summary cites
+  every source used.
+- Trade-off: the report is now a faithful list of facts rather than a fluent narrative (34 bullets for one topic).
+  Grouping or ranking the bullets is future work.
+- Summarizer: facts the model leaves unfinished ("La muestra busca explorar cómo la tecnología", found while
+  labelling) are removed by a heuristic (`is_incomplete_fact`) and kept in `discarded_incomplete`. On the 95 facts of
+  the two diagnostic runs it flagged exactly that one fact and nothing else. It cannot catch every truncation; the
+  prompt now also asks for complete sentences.
+- Rubric: added the `no_quote` tag.
+- 21 unit tests. **Not yet re-run on Colab/Kaggle with a real model.**
+
 ## Next steps (in order)
 1. [x] Stricter verification in code (numbers / proper nouns in the quote, reject headline echoes).
 2. [x] Reproducible benchmark: harness + run 1 done (see above).

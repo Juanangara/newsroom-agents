@@ -20,16 +20,16 @@ def test_full_pipeline_drops_unsupported_facts(monkeypatch):
     monkeypatch.setattr("newsroom.agents.fetch_text", lambda a: a)
     llm = FakeLLM([
         "[0]",                                                             # researcher
-        '{"summary": "Dólar estable.", "key_facts": ["cerró en 4000", "subió 10%"]}',  # summarizer
+        '{"summary": "Dólar estable.", "key_facts": ["El dólar cerró en 4000 pesos", "El dólar subió 10% ayer"]}',  # summarizer
         '[{"id": 0, "quote": "El dólar cerró en 4000 pesos."}, {"id": 1, "quote": "subió diez por ciento"}]',  # verifier (2nd quote is fabricated)
         "# Informe\n- Dólar en 4000 [1]\n- Sin cita",                               # editor
     ])
     r = run_newsroom("dólar", llm, verbose=False, min_quote_chars=0)
-    assert r.sources[0].supported_facts == ["cerró en 4000"]
-    assert r.sources[0].dropped_facts == ["subió 10%"]
+    assert r.sources[0].supported_facts == ["El dólar cerró en 4000 pesos"]
+    assert r.sources[0].dropped_facts == ["El dólar subió 10% ayer"]
     assert r.grounding_rate == 0.5
     assert "## Fuentes" in r.markdown
-    assert r.citation_coverage == 0.5
+    assert r.citation_coverage == 1.0   # bullets are written by code, always cited
 
 
 def test_quote_must_exist_in_source():
@@ -177,3 +177,49 @@ def test_label_eval_scores_judge_against_labels(tmp_path):
     assert res["judge alone"]["precision"] == 1.0 and res["judge alone"]["recall"] == 1.0
     assert res["lexical (numbers + quote length)"]["false_accepts"] == 1   # lexical alone keeps the bad one
     assert res["disagreements"] == []
+
+
+def _item(facts, title="Fuente", url="u"):
+    from newsroom.schemas import VerifiedSummary
+    return VerifiedSummary(article_id=0, title=title, url=url, summary="", key_facts=facts, supported_facts=facts)
+
+
+def test_editor_builds_bullets_in_code_with_citations():
+    from newsroom.agents import Editor, citation_coverage
+    items = [_item(["El dólar cerró en 4000 pesos hoy."]), _item(["La inflación bajó al 5% anual"], "Otra")]
+    ed = Editor(FakeLLM(['{"title": "Mercado", "summary": "El dólar y la inflación se movieron."}']))
+    md = ed.run("mercado", items)
+    assert "- El dólar cerró en 4000 pesos hoy [1]" in md and "- La inflación bajó al 5% anual [2]" in md
+    assert "# Mercado" in md and "[1] [2]" in md and "## Fuentes" in md
+    assert citation_coverage(md) == 1.0 and ed.summary_grounded
+
+
+def test_editor_drops_summary_that_invents_numbers_or_names():
+    from newsroom.agents import Editor
+    items = [_item(["Colombia tiene un Ministerio TIC activo"])]
+    bad_name = Editor(FakeLLM(['{"title": "T", "summary": "Colombia tiene un Ministerio de Tecnología e Innovación."}']))
+    md = bad_name.run("tic", items)
+    assert not bad_name.summary_grounded and "Innovación" not in md and "- Colombia tiene un Ministerio TIC activo [1]" in md
+    bad_num = Editor(FakeLLM(['{"title": "T", "summary": "Colombia gasta 900 millones."}']))
+    bad_num.run("tic", items)
+    assert not bad_num.summary_grounded
+
+
+def test_editor_survives_unparseable_model_output_and_dedupes():
+    from newsroom.agents import Editor
+    items = [_item(["El dólar cerró en 4000 pesos hoy", "El dólar cerró en 4000 pesos hoy."])]
+    ed = Editor(FakeLLM(["no json", "still no", "nope"]))
+    md = ed.run("dólar", items)
+    assert md.count("- El dólar cerró") == 1 and "# Dólar" in md
+
+
+def test_incomplete_facts_are_removed_by_the_summarizer():
+    from newsroom.agents import Summarizer, is_incomplete_fact
+    assert is_incomplete_fact("La muestra busca explorar cómo la tecnología")   # interrogative left open
+    assert is_incomplete_fact("El proyecto fue aprobado por la")                # ends in a function word
+    assert is_incomplete_fact("Colombia sube")                                  # too short
+    assert not is_incomplete_fact("El dólar cerró en 4000 pesos")
+    llm = FakeLLM(['{"summary": "x", "key_facts": ["El dólar cerró en 4000 pesos", "La muestra explora cómo la tecnología"]}'])
+    s = Summarizer(llm).run(0, Article(title="A", url="u", text="..."))
+    assert s.key_facts == ["El dólar cerró en 4000 pesos"]
+    assert s.discarded_incomplete == ["La muestra explora cómo la tecnología"]
