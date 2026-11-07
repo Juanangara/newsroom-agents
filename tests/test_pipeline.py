@@ -38,3 +38,18 @@ def test_quote_must_exist_in_source():
     assert quote_in_text("El dólar cerró en 4000 pesos", text)
     assert not quote_in_text("El dólar subió un diez por ciento", text)
     assert not quote_in_text("null", text)
+
+
+def test_claim_details_must_be_in_quote():
+    from newsroom.agents import details_in_quote
+    quote = "El 47% de las empresas colombianas identifica la escasez de talento"
+    assert details_in_quote("El 47% de las empresas identifica escasez de talento", quote)
+    assert not details_in_quote("El 57% de las empresas identifica escasez de talento", quote)
+    assert not details_in_quote("Según Microsoft, la escasez de talento es el problema", quote)
+
+
+def test_headline_echo_is_rejected():
+    from newsroom.agents import is_headline_echo
+    title = "Colombia busca en la inteligencia artificial una respuesta a los retos de su sistema de salud"
+    assert is_headline_echo("Colombia busca en la IA una respuesta a los retos de su sistema de salud", title)
+    assert not is_headline_echo("El 47% de las empresas no encuentra personal capacitado", title)

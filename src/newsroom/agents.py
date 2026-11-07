@@ -61,6 +61,28 @@ def quote_in_text(quote: str, text: str, min_ratio: float = 0.8) -> bool:
     return m.size / len(q) >= min_ratio
 
 
+_NUM = re.compile(r"\d[\d.,]*")
+
+
+def details_in_quote(claim: str, quote: str) -> bool:
+    """Numbers and proper nouns in the claim must appear in the evidence quote.
+    A real quote that does not contain the claim's specifics does not support it."""
+    q = _norm(quote)
+    for n in _NUM.findall(claim):
+        if _norm(n).strip(".,") not in q:
+            return False
+    words = re.findall(r"[\wÁÉÍÓÚÑáéíóúñ]+", claim)
+    for i, w in enumerate(words):
+        if i > 0 and w[0].isupper() and not w.isdigit() and _norm(w) not in q:
+            return False
+    return True
+
+
+def is_headline_echo(claim: str, title: str, threshold: float = 0.75) -> bool:
+    """Facts that merely restate the headline carry no concrete information."""
+    return SequenceMatcher(None, _norm(claim), _norm(title)).ratio() >= threshold
+
+
 class Verifier:
     """Fact-checks each key fact. The model must give a quote from the source; code checks the quote
     really exists in the text, so a sloppy 'true' from a small model is not enough."""
@@ -83,7 +105,13 @@ class Verifier:
         for r in rows if isinstance(rows, list) else []:
             if isinstance(r, dict) and isinstance(r.get("id"), int) and isinstance(r.get("quote"), str):
                 quotes[r["id"]] = r["quote"]
-        ok = [f for i, f in enumerate(s.key_facts) if i in quotes and quote_in_text(quotes[i], a.text)]
+        ok = [
+            f for i, f in enumerate(s.key_facts)
+            if i in quotes
+            and quote_in_text(quotes[i], a.text)
+            and details_in_quote(f, quotes[i])
+            and not is_headline_echo(f, a.title)
+        ]
         bad = [f for f in s.key_facts if f not in ok]
         return VerifiedSummary(**s.model_dump(), supported_facts=ok, dropped_facts=bad)
 
