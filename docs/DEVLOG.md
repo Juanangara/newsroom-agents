@@ -89,6 +89,13 @@ Raw output: `results/benchmark_run1.json` and `results/benchmark_run1.md`.
   `headline_echo`); the benchmark aggregates them in `drop_reasons`.
 - 10 unit tests, including regressions for both. **Not yet re-run on Colab.**
 
+## Iteration 6: fixed verifier for the benchmark
+- `run_newsroom(..., verifier_llm=...)` lets a different model do the fact-checking. The benchmark can
+  now run in two configurations: **fixed verifier** (Qwen2.5-7B checks every model's facts, isolating
+  generation quality) and **self-verification** (default pipeline). Results go to
+  `results/benchmark_<tag>.json|md`, with a `verifier` column and per-model `drop_reasons`.
+- Test confirms the verifier model receives only the fact-checking call. **Not yet run on Colab.**
+
 ## Next steps (in order)
 1. [x] Stricter verification in code (numbers / proper nouns in the quote, reject headline echoes).
 2. [x] Reproducible benchmark: harness + run 1 done (see above).

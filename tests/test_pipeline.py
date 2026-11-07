@@ -97,3 +97,15 @@ def test_drop_reasons_are_recorded():
     assert v.drop_reasons["y cita falsa"] == "quote_not_in_source"
     assert v.drop_reasons["El dólar cerró en 5000 pesos"] == "details_missing"
     assert v.supported_facts == ["El dólar cerró en 4000 pesos"]
+
+
+def test_fixed_verifier_is_used_for_fact_checking():
+    writer = FakeLLM([
+        '{"summary": "x", "key_facts": ["El dólar cerró en 4000 pesos"]}',   # summarizer
+        "# T\n- Dólar en 4000 [1]",                                           # editor
+    ])
+    checker = FakeLLM(['[{"id": 0, "quote": "El dólar cerró en 4000 pesos hoy."}]'])  # verifier only
+    arts = [Article(title="A", url="u", text="El dólar cerró en 4000 pesos hoy.")]
+    r = run_newsroom("dólar", writer, articles=arts, verbose=False, verifier_llm=checker)
+    assert r.grounding_rate == 1.0
+    assert len(checker.calls) == 1 and len(writer.calls) == 2
