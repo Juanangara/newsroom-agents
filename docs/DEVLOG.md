@@ -49,7 +49,27 @@ decisions taken. Test topic: "inteligencia artificial en Colombia" (the pipeline
   citation coverage, JSON failures and time; results are saved after every model (Colab disconnects).
 - Bug found while writing its test: `extract_json` returned the inner object for a one-element list
   (`[{"id":0,...}]`), so the Verifier silently lost its answer. Fixed + regression test.
-- Models compared (no paid APIs): Qwen2.5-3B, Qwen2.5-7B, Phi-3.5-mini, all 4-bit. **Not yet run.**
+- Models compared (no paid APIs): Qwen2.5-3B, Qwen2.5-7B, Phi-3.5-mini, all 4-bit. 
+### Final benchmark (Kaggle T4 x2, fixed verifier Qwen2.5-7B, 16 frozen articles)
+Files: `results/benchmark_final.json`, `.md`.
+
+| Model | Grounding | Supported / proposed | Coverage | JSON failures | Time (s) |
+|---|---|---|---|---|---|
+| Qwen2.5-3B | 0.83 | 40 / 48 | 1.00 | 0/16 | 605 |
+| Qwen2.5-7B | 0.71 | 46 / 65 | 1.00 | 0/16 | 630 |
+| Phi-3.5-mini | 0.80 | 56 / 70 | 1.00 | 0/16 | 769 |
+
+Findings:
+- Grounding roughly doubled versus the provisional tables (0.31-0.41 -> 0.71-0.83), consistent with the fixes
+  (Spanish facts: 0 English of 183; separator-insensitive numbers; no name filter). Sanity checks pass.
+- Drop reasons are now spread out (`quote_too_short`, `number_missing`, `quote_not_in_source`, `no_quote`) instead
+  of dominated by the old filters. No incomplete facts discarded except 1 (Phi); the Editor summary was discarded
+  for 1/2 topics only with Phi.
+- **Grounding is the verifier's pass rate, not accuracy.** Labelled data suggest ~22% of verified facts are still
+  unsupported, so true precision is roughly 0.78 of the supported counts.
+- With 48-70 facts per model the differences (0.71 vs 0.83) are within noise (overlapping Wilson intervals);
+  I do not claim a winner. Phi yields the most verified facts (56) but is slowest.
+- Citation coverage is 1.00 by construction; it no longer discriminates.
 
 ## Benchmark run 1 (Colab T4, 4-bit, greedy decoding, 2 topics x 8 articles = 16 articles)
 
@@ -347,7 +367,27 @@ glance; for example, "the reform faces controversy between the opposition and th
 that says no such thing. The quote line starts with `>` and is not counted as an uncited claim by `citation_coverage`.
 The benchmark also records how often the Editor's summary was discarded and how many incomplete facts were removed.
 23 unit tests. `notebooks/benchmark_kaggle.ipynb` re-runs the model comparison with the current pipeline.
-**Not yet run.**
+
+### Final benchmark (Kaggle T4 x2, fixed verifier Qwen2.5-7B, 16 frozen articles)
+Files: `results/benchmark_final.json`, `.md`.
+
+| Model | Grounding | Supported / proposed | Coverage | JSON failures | Time (s) |
+|---|---|---|---|---|---|
+| Qwen2.5-3B | 0.83 | 40 / 48 | 1.00 | 0/16 | 605 |
+| Qwen2.5-7B | 0.71 | 46 / 65 | 1.00 | 0/16 | 630 |
+| Phi-3.5-mini | 0.80 | 56 / 70 | 1.00 | 0/16 | 769 |
+
+Findings:
+- Grounding roughly doubled versus the provisional tables (0.31-0.41 -> 0.71-0.83), consistent with the fixes
+  (Spanish facts: 0 English of 183; separator-insensitive numbers; no name filter). Sanity checks pass.
+- Drop reasons are now spread out (`quote_too_short`, `number_missing`, `quote_not_in_source`, `no_quote`) instead
+  of dominated by the old filters. No incomplete facts discarded except 1 (Phi); the Editor summary was discarded
+  for 1/2 topics only with Phi.
+- **Grounding is the verifier's pass rate, not accuracy.** Labelled data suggest ~22% of verified facts are still
+  unsupported, so true precision is roughly 0.78 of the supported counts.
+- With 48-70 facts per model the differences (0.71 vs 0.83) are within noise (overlapping Wilson intervals);
+  I do not claim a winner. Phi yields the most verified facts (56) but is slowest.
+- Citation coverage is 1.00 by construction; it no longer discriminates.
 
 ## Next steps (in order)
 1. [x] Stricter verification in code (numbers / proper nouns in the quote, reject headline echoes).

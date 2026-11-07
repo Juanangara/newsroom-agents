@@ -28,24 +28,23 @@ topic ─► Researcher ─► Summarizer ─► Verifier ─► Editor ─► r
 Benchmark on a frozen set of 16 real Colombian news articles (2 topics), Colab T4, 4-bit models.
 **Grounding** = facts the Verifier could back with a verbatim quote from the source / facts proposed.
 
-Two setups: the models verify their own facts (**self**), or one fixed model (Qwen2.5-7B) fact-checks
-for all of them (**fixed verifier**), which isolates generation quality.
+Fixed verifier (Qwen2.5-7B fact-checks for every model), current pipeline, deterministic runs:
 
-| Model | Grounding (self) | Grounding (fixed verifier) | Facts supported / proposed (fixed) | Citation coverage (fixed) | JSON failures |
-|---|---|---|---|---|---|
-| Qwen2.5-3B-Instruct | 0.18 | 0.31 | 16 / 51 | 0.88 | 0/16 |
-| Qwen2.5-7B-Instruct | 0.32 | 0.32 | 21 / 65 | 1.00 | 0/16 |
-| Phi-3.5-mini-instruct | 0.20 | **0.41** | **28 / 69** | 0.94 | 1/16 |
+| Model | Grounding | Facts supported / proposed | Citation coverage | JSON failures |
+|---|---|---|---|---|
+| Qwen2.5-3B-Instruct | 0.83 | 40 / 48 | 1.00 | 0/16 |
+| Qwen2.5-7B-Instruct | 0.71 | 46 / 65 | 1.00 | 0/16 |
+| Phi-3.5-mini-instruct | 0.80 | 56 / 70 | 1.00 | 0/16 |
 
-> **These numbers are provisional.** A diagnostic run showed that 32 of 51 facts were written in English
-> for Spanish articles and that number formatting (`765,000` vs `765.000`) caused false drops. Both are
-> fixed in the code; the benchmark has not been re-run since. See the DEVLOG.
+> Earlier numbers (0.18-0.41) were dominated by bugs later fixed (English facts, number separators, strict
+> name filter) and are kept only as history in the DEVLOG.
 
 What this shows, and what it does not:
-- The ranking depends on who verifies, so self-verified scores should not be used to compare generators.
+- Grounding is the verifier's pass rate, **not** accuracy: on hand-labelled data about 22% of verified facts
+  were still unsupported, which is why each bullet shows its evidence quote.
 - Runs are deterministic: repeating a configuration gives identical numbers.
-- About 90% of discarded facts are removed by the number / proper-noun filter, not by missing quotes, so
-  grounding of 0.3-0.4 is **not** evidence that most facts are hallucinated. The filter is being re-evaluated.
+- Citation coverage is 1.00 by construction (bullets are built in code), so it no longer separates models.
+- With 48-70 facts per model, the differences between models are within noise; no winner is claimed.
 - Single set of 16 articles; small differences are not significant.
 
 Full analysis, bugs found along the way and open questions: [`docs/DEVLOG.md`](docs/DEVLOG.md).
