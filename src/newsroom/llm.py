@@ -55,11 +55,13 @@ class HFLocalLLM:
 
     def chat(self, system: str, user: str, max_tokens: int = 700) -> str:
         msgs = [{"role": "system", "content": system}, {"role": "user", "content": user}]
-        ids = self.tok.apply_chat_template(msgs, add_generation_prompt=True, return_tensors="pt").to(
-            self.model.device
-        )
-        out = self.model.generate(ids, max_new_tokens=max_tokens, do_sample=False)
-        return self.tok.decode(out[0][ids.shape[1] :], skip_special_tokens=True).strip()
+        # tokenize=False + tokenizer(...) works across transformers versions (the return type of
+        # apply_chat_template(return_tensors="pt") changed between releases)
+        prompt = self.tok.apply_chat_template(msgs, add_generation_prompt=True, tokenize=False)
+        enc = self.tok(prompt, return_tensors="pt").to(self.model.device)
+        out = self.model.generate(**enc, max_new_tokens=max_tokens, do_sample=False)
+        n_in = enc["input_ids"].shape[1]
+        return self.tok.decode(out[0][n_in:], skip_special_tokens=True).strip()
 
 
 class ClaudeLLM:
