@@ -81,7 +81,7 @@ Findings:
 | Qwen2.5-7B-Instruct | **0.32** | **21 / 65** | 0/16 | 597 |
 | Phi-3.5-mini-instruct | 0.20 | 14 / 69 | 1/16 | 843 |
 
-Raw output: `results/benchmark_run1.json` and `results/benchmark_run1.md`.
+Raw output: `results/history/benchmark_run1.json` and `.md`.
 
 ### Findings
 1. **Model size helped.** The 7B model supported more than twice as many facts as the 3B (21 vs 9) with a
@@ -246,7 +246,7 @@ sample (risk of overfitting). Treat the numbers as directional.
 - Caveat: 100 characters was chosen by looking at the same sample it is evaluated on.
 
 ## Entailment judge vs. hand labels (Qwen2.5-7B judge, 49 labelled facts)
-Raw output: `results/judge_eval.json` (includes all 17 disagreements with the labels).
+Raw output: `results/history/judge_eval.json` (includes all 17 disagreements with the labels).
 
 | Rule | Accepts | Precision (95% CI) | Recall | False accepts |
 |---|---|---|---|---|

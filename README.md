@@ -1,7 +1,14 @@
 # newsroom-agents
 
+[![tests](https://github.com/Juanangara/newsroom-agents/actions/workflows/tests.yml/badge.svg)](https://github.com/Juanangara/newsroom-agents/actions/workflows/tests.yml)
+
 A team of autonomous agents that produces a news report with **verified claims and cited sources**.
-It runs entirely on Google Colab's free T4 GPU, with no API keys required.
+It runs on a free T4 GPU (Kaggle or Colab) with local open models and no API keys.
+
+**In short:** every bullet in the report is a claim the Verifier found, verbatim, in the source article, shown
+with its evidence quote. The project is also a measurement exercise: a frozen benchmark, hand-labelled data and a
+[development log](docs/DEVLOG.md) of what worked and what did not (including a judge model that turned out not
+to help).
 
 ```
 topic ─► Researcher ─► Summarizer ─► Verifier ─► Editor ─► report.md
@@ -20,12 +27,12 @@ topic ─► Researcher ─► Summarizer ─► Verifier ─► Editor ─► r
 - **Grounding metric:** `report.grounding_rate` = supported facts / proposed facts.
 - **Citation coverage:** `report.citation_coverage` = bullets with a `[n]` citation / all bullets.
 - **Full trace** of every step (`report.trace`).
-- **Swappable LLM:** local Qwen2.5 in 4-bit (Colab) or Claude via API.
+- **Swappable LLM:** local open models in 4-bit (Qwen2.5 3B/7B, Phi-3.5-mini); other backends plug into a small `LLM` interface.
 - **Robust:** JSON parsing with retries and self-correction; one failing article does not stop the pipeline.
 - **Testable without a GPU:** a scripted `FakeLLM` gives deterministic tests.
 
 ## Results
-Benchmark on a frozen set of 16 real Colombian news articles (2 topics), Colab T4, 4-bit models.
+Benchmark on a frozen set of 16 real Colombian news articles (2 topics), Kaggle T4, 4-bit models.
 **Grounding** = facts the Verifier could back with a verbatim quote from the source / facts proposed.
 
 Fixed verifier (Qwen2.5-7B fact-checks for every model), current pipeline, deterministic runs:
@@ -76,8 +83,8 @@ The quotes make weak bullets visible. The fourth bullet says the approval happen
 support", while the quote only says the minister was absent: an interpretation, the kind of error that survives
 the quote check (see the DEVLOG).
 
-## Run on Colab
-Open `notebooks/colab.ipynb`, enable a T4 GPU and run all cells. Or manually:
+## Run
+On Colab open `notebooks/colab.ipynb`, enable a T4 GPU and run all cells (on Kaggle use `notebooks/benchmark_kaggle.ipynb`). Or manually:
 
 ```python
 !git clone https://github.com/Juanangara/newsroom-agents.git
@@ -96,7 +103,15 @@ print(report.markdown)
 pip install -e '.[dev]' && pytest
 ```
 
+## Limitations
+- One benchmark set (16 Colombian news articles, 2 topics) and a single annotator; small differences are noise.
+- The Verifier checks that a quote exists and contains the claim's numbers; it does not check meaning. About 22%
+  of verified facts were still unsupported on hand-labelled data, which is why quotes are shown.
+- Spanish-language news only so far.
+
 ## Roadmap
-- Reproducible benchmark: Qwen 3B vs 7B vs Claude on a fixed article set.
-- Retry loop (LangGraph) when an article's grounding is low.
+- Retry loop (e.g. LangGraph) for low-grounding articles, only if a benchmark shows it helps.
+- Larger judge model, adopted only if it clears a pre-registered threshold on the held-out labels.
 - Scheduled delivery of the report by email or Telegram.
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for reproducing the benchmark and the labelling setup.
