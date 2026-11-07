@@ -21,11 +21,20 @@ def test_full_pipeline_drops_unsupported_facts(monkeypatch):
     llm = FakeLLM([
         "[0]",                                                             # researcher
         '{"summary": "Dólar estable.", "key_facts": ["cerró en 4000", "subió 10%"]}',  # summarizer
-        "[true, false]",                                                   # verifier
-        "# Informe\n- Dólar en 4000 [1]",                                  # editor
+        '[{"id": 0, "quote": "El dólar cerró en 4000 pesos."}, {"id": 1, "quote": "subió diez por ciento"}]',  # verifier (2nd quote is fabricated)
+        "# Informe\n- Dólar en 4000 [1]\n- Sin cita",                               # editor
     ])
     r = run_newsroom("dólar", llm, verbose=False)
     assert r.sources[0].supported_facts == ["cerró en 4000"]
     assert r.sources[0].dropped_facts == ["subió 10%"]
     assert r.grounding_rate == 0.5
     assert "## Fuentes" in r.markdown
+    assert r.citation_coverage == 0.5
+
+
+def test_quote_must_exist_in_source():
+    from newsroom.agents import quote_in_text
+    text = "El dólar cerró en 4000 pesos, según el Banco de la República."
+    assert quote_in_text("El dólar cerró en 4000 pesos", text)
+    assert not quote_in_text("El dólar subió un diez por ciento", text)
+    assert not quote_in_text("null", text)

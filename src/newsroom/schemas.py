@@ -34,4 +34,5 @@ class Report(BaseModel):
     markdown: str
     sources: list[VerifiedSummary]
     grounding_rate: float
+    citation_coverage: float = 0.0
     trace: list[dict] = Field(default_factory=list)

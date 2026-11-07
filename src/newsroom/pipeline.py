@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 
-from .agents import Editor, Researcher, Summarizer, Verifier
+from .agents import Editor, citation_coverage, Researcher, Summarizer, Verifier
 from .llm import LLM
 from .schemas import Report
 
@@ -31,8 +31,10 @@ def run_newsroom(topic: str, llm: LLM, max_articles: int = 5, verbose: bool = Tr
         verified.append(v)
 
     md = Editor(llm).run(topic, verified)
-    step("editor", chars=len(md))
+    cov = citation_coverage(md)
+    step("editor", chars=len(md), citation_coverage=round(cov, 2))
 
     facts = sum(len(v.supported_facts) + len(v.dropped_facts) for v in verified)
     ok = sum(len(v.supported_facts) for v in verified)
-    return Report(topic=topic, markdown=md, sources=verified, grounding_rate=ok / facts if facts else 1.0, trace=trace)
+    return Report(topic=topic, markdown=md, sources=verified, grounding_rate=ok / facts if facts else 1.0,
+                  citation_coverage=cov, trace=trace)
