@@ -12,7 +12,7 @@ topic ─► Researcher ─► Summarizer ─► Verifier ─► Editor ─► r
 |---|---|---|
 | **Researcher** | Searches Google News (RSS), deduplicates, filters by relevance and fetches the full text | list of ids (JSON) |
 | **Summarizer** | Summarizes each article and extracts verifiable facts | `{summary, key_facts[]}` |
-| **Verifier** | Must quote the source for each fact; code checks the quote exists and contains the claim's numbers and names. Unsupported facts are **dropped** | `[{id, quote}]` |
+| **Verifier** | Must quote the source for each fact; code checks the quote exists in the source, is at least 100 characters and contains the claim's numbers. Unsupported facts are **dropped**. An optional meaning-level judge (`entailment=True`) trades recall for precision | `[{id, quote}]` |
 | **Editor** | Bullets are the verified facts themselves, each with its `[n]` citation, assembled in code. The model only proposes a title and short summary, discarded if they add numbers or names not in the facts | markdown |
 
 ## Why it is more than a demo
