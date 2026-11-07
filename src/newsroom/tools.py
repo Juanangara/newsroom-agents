@@ -53,7 +53,7 @@ def fetch_text(article: Article, max_chars: int = 4000, timeout: int = 10) -> Ar
 
             url = gnewsdecoder(url, interval=1).get("decoded_url") or url
         r = requests.get(url, timeout=timeout, headers={"User-Agent": "Mozilla/5.0"})
-        body = trafilatura.extract(r.text) or ""
+        body = trafilatura.extract(r.content)  # bytes: lets trafilatura detect the charset (r.text guessed latin-1) or ""
         if len(body) > len(article.text):
             return article.model_copy(update={"text": body[:max_chars], "url": url})
     except Exception:

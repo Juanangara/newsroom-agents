@@ -180,6 +180,40 @@ Drop reasons: `name_missing` 26, `number_missing` 6, `no_quote` 2, `quote_not_in
 - Evidence now also records `fact_looks_english` to catch any language mismatch that remains.
 - 13 unit tests. **Not yet re-run on Colab.**
 
+## Hand-labelled evaluation of the verification rules (49 facts, one labeller)
+Labels: `results/labeling/labels_filled.csv` (30 supported, 19 not supported, 2 skipped). Facts from the
+diagnostic run (Qwen 3B writer, Qwen 7B verifier); 32 of the 51 facts were still in English.
+Scored with `scripts/score_rules.py`. A rule "accepts" a fact when it would keep it in the report.
+
+| Rule | Accepts | Precision | Recall | False accepts |
+|---|---|---|---|---|
+| any real quote (no detail checks) | 48 | 0.60 | 0.97 | 19 |
+| numbers only | 44 | 0.64 | 0.93 | 16 |
+| numbers + quote >= 100 chars | 39 | 0.69 | 0.90 | 12 |
+| numbers + quote >= 120 chars | 37 | 0.70 | 0.87 | 11 |
+| numbers + names vs source | 24 | 0.67 | 0.53 | 8 |
+| numbers + names vs quote (current) | 18 | 0.67 | 0.40 | 6 |
+
+### Findings
+1. **Base rate:** 61% (30/49) of the verifier's quotes really support their fact. The 7B verifier alone lets
+   through a lot of unsupported claims.
+2. **The name filter is nearly uncorrelated with truth.** It raises precision only from 0.60 to 0.67 while
+   cutting recall from 0.97 to 0.40: of the 33 facts it rejected, 20 were genuinely supported (16 of them
+   `name_missing`). That is a bad trade. The earlier hypothesis ("too strict") is confirmed by data.
+3. **Quote length is the best cheap signal found:** quotes under 120 characters were supported 2/8 times
+   (25%) against 28/41 (68%) for longer ones. Truncated quotes ("...trabajamos conjuntam") pass every lexical
+   check. Small sample, but consistent.
+4. **The remaining false accepts are semantic, not lexical:** a quote on the right topic that does not
+   support the claim (e.g. fact "every five years" vs quote "every six months"; the number was written as a
+   word, so the digit check could not see it). Only a meaning-level check (does the quote entail the fact?)
+   can catch these.
+5. **Misattribution:** facts that drop who said something (a senator's warning stated as fact, a
+   counter-reform described as "the reform") are labelled unsupported but pass lexical checks.
+
+### Caveats
+Single labeller, 49 facts, English-contaminated facts, and the rules were tuned looking at this same
+sample (risk of overfitting). Treat the numbers as directional.
+
 ## Next steps (in order)
 1. [x] Stricter verification in code (numbers / proper nouns in the quote, reject headline echoes).
 2. [x] Reproducible benchmark: harness + run 1 done (see above).
