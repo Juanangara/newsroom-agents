@@ -1,0 +1,37 @@
+from __future__ import annotations
+
+from pydantic import BaseModel, Field
+
+
+class Article(BaseModel):
+    title: str
+    url: str
+    source: str = ""
+    published: str = ""
+    text: str = ""  # full text if it could be fetched, otherwise the RSS snippet
+
+
+class ArticleSummary(BaseModel):
+    article_id: int
+    title: str
+    url: str
+    summary: str
+    key_facts: list[str] = Field(default_factory=list)
+
+
+class VerifiedSummary(ArticleSummary):
+    supported_facts: list[str] = Field(default_factory=list)
+    dropped_facts: list[str] = Field(default_factory=list)
+
+    @property
+    def grounding_rate(self) -> float:
+        total = len(self.supported_facts) + len(self.dropped_facts)
+        return 1.0 if total == 0 else len(self.supported_facts) / total
+
+
+class Report(BaseModel):
+    topic: str
+    markdown: str
+    sources: list[VerifiedSummary]
+    grounding_rate: float
+    trace: list[dict] = Field(default_factory=list)

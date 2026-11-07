@@ -1,0 +1,38 @@
+from __future__ import annotations
+
+import time
+
+from .agents import Editor, Researcher, Summarizer, Verifier
+from .llm import LLM
+from .schemas import Report
+
+
+def run_newsroom(topic: str, llm: LLM, max_articles: int = 5, verbose: bool = True) -> Report:
+    trace: list[dict] = []
+
+    def step(agent: str, **info):
+        trace.append({"agent": agent, "t": round(time.time(), 2), **info})
+        if verbose:
+            print(f"[{agent}] " + ", ".join(f"{k}={v}" for k, v in info.items()))
+
+    articles = Researcher(llm, max_articles=max_articles).run(topic)
+    step("researcher", articles=len(articles), titles=[a.title[:50] for a in articles])
+
+    summarizer, verifier = Summarizer(llm), Verifier(llm)
+    verified = []
+    for i, a in enumerate(articles):
+        try:
+            s = summarizer.run(i, a)
+            v = verifier.run(s, a)
+        except ValueError as e:  # model never produced valid JSON: skip the article, keep going
+            step("error", article=i, error=str(e)[:80])
+            continue
+        step("summarizer+verifier", article=i, kept=len(v.supported_facts), dropped=len(v.dropped_facts))
+        verified.append(v)
+
+    md = Editor(llm).run(topic, verified)
+    step("editor", chars=len(md))
+
+    facts = sum(len(v.supported_facts) + len(v.dropped_facts) for v in verified)
+    ok = sum(len(v.supported_facts) for v in verified)
+    return Report(topic=topic, markdown=md, sources=verified, grounding_rate=ok / facts if facts else 1.0, trace=trace)
