@@ -109,6 +109,34 @@ def is_headline_echo(claim: str, title: str, threshold: float = 0.75) -> bool:
     return SequenceMatcher(None, _norm(claim), _norm(title)).ratio() >= threshold
 
 
+class EntailmentJudge:
+    """Meaning-level check: does this quote, on its own, fully support this claim?
+
+    Lexical checks cannot catch a quote on the right topic that does not support the claim (e.g. "every five
+    years" vs "every six months", or a senator's warning stated as fact). This is a separate, short call."""
+
+    system = (
+        "You are a strict fact-checker. Decide whether the QUOTE, on its own, fully supports the CLAIM. "
+        "Answer false if the claim adds anything the quote does not say (a number, a name, a time frame, a "
+        "cause, who said it), if the claim states as fact something the quote presents as one person's "
+        "opinion or warning, if the quote is about the same topic but says something different, or if the "
+        "quote is cut off. The claim and the quote may be in different languages: compare meaning. "
+        'Reply with ONLY JSON: {"supported": true or false, "reason": "max 12 words"}'
+    )
+
+    def __init__(self, llm: LLM):
+        self.llm = llm
+
+    def run(self, claim: str, quote: str) -> tuple[bool, str]:
+        try:
+            data = chat_json(self.llm, self.system, f"CLAIM: {claim}\n\nQUOTE: {quote}", max_tokens=120)
+        except ValueError:
+            return False, "unparseable judge reply"  # fail closed: do not keep a fact we could not check
+        if not isinstance(data, dict):
+            return False, "unparseable judge reply"
+        return data.get("supported") is True, str(data.get("reason", ""))[:120]
+
+
 class Verifier:
     """Fact-checks each key fact. The model must give a quote from the source; code checks the quote
     really exists in the text, so a sloppy 'true' from a small model is not enough."""
@@ -119,8 +147,13 @@ class Verifier:
         'Reply with ONLY a JSON list like [{"id": 0, "quote": "exact text from source"}, {"id": 1, "quote": null}].'
     )
 
-    def __init__(self, llm: LLM):
+    def __init__(self, llm: LLM, min_quote_chars: int = 100, entailment: bool = False):
+        """min_quote_chars: shorter quotes are rejected (hand labels: quotes <120 chars were supported only
+        25% of the time, and truncated quotes pass every lexical check).
+        entailment: also ask the model whether the quote really supports the whole fact (see EntailmentJudge)."""
         self.llm = llm
+        self.min_quote_chars = min_quote_chars
+        self.judge = EntailmentJudge(llm) if entailment else None
 
     def run(self, s: ArticleSummary, a: Article) -> VerifiedSummary:
         if not s.key_facts:
@@ -146,14 +179,20 @@ class Verifier:
                 ev["quote_in_source"] = quote_in_text(q, a.text)
                 ev["numbers_missing_in_quote"] = numbers_missing(f, q)
                 ev["names_missing_in_quote"] = names_missing(f, q)
+                # Proper-noun matching is recorded in the evidence but no longer rejects facts: on the
+                # hand-labelled sample it raised precision 0.60 -> 0.67 while cutting recall 0.97 -> 0.40.
                 if not ev["quote_in_source"]:
                     reasons[f] = "quote_not_in_source"
+                elif len(q) < self.min_quote_chars:
+                    reasons[f] = "quote_too_short"
                 elif ev["numbers_missing_in_quote"]:
                     reasons[f] = "number_missing"
-                elif ev["names_missing_in_quote"]:
-                    reasons[f] = "name_missing"
                 elif ev["headline_echo"]:
                     reasons[f] = "headline_echo"
+                elif self.judge is not None:
+                    ev["entailed"], ev["entail_reason"] = self.judge.run(f, q)
+                    if not ev["entailed"]:
+                        reasons[f] = "not_entailed"
             if f not in reasons:
                 ok.append(f)
             ev["supported"] = f not in reasons

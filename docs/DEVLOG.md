@@ -214,6 +214,15 @@ Scored with `scripts/score_rules.py`. A rule "accepts" a fact when it would keep
 Single labeller, 49 facts, English-contaminated facts, and the rules were tuned looking at this same
 sample (risk of overfitting). Treat the numbers as directional.
 
+## Iteration 9: act on the labelled evaluation
+- The proper-noun check no longer rejects facts (still recorded as a signal in `evidence`).
+- Quotes shorter than 100 characters are rejected (`quote_too_short`; `min_quote_chars` is a parameter).
+- New optional `EntailmentJudge` (`entailment=True`): a separate call that asks whether the quote alone fully
+  supports the claim. It fails closed (a fact is dropped if the judge's reply cannot be parsed).
+- `newsroom.label_eval` + `notebooks/judge_eval.ipynb` measure the judge against the 49 hand labels without
+  re-running the benchmark. 17 unit tests. **Judge not yet measured on Colab; it is off by default until it is.**
+- Caveat: 100 characters was chosen by looking at the same sample it is evaluated on.
+
 ## Next steps (in order)
 1. [x] Stricter verification in code (numbers / proper nouns in the quote, reject headline echoes).
 2. [x] Reproducible benchmark: harness + run 1 done (see above).

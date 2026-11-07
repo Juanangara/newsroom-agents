@@ -8,7 +8,8 @@ from .schemas import Article, Report
 
 
 def run_newsroom(topic: str, llm: LLM, max_articles: int = 5, verbose: bool = True,
-                 articles: list[Article] | None = None, verifier_llm: LLM | None = None) -> Report:
+                 articles: list[Article] | None = None, verifier_llm: LLM | None = None,
+                 min_quote_chars: int = 100, entailment: bool = False) -> Report:
     """Run the team. Pass `articles` to skip the Researcher (fixed inputs, e.g. for benchmarks).
     Pass `verifier_llm` to fact-check with a different model than the one that writes (default: same)."""
     trace: list[dict] = []
@@ -24,7 +25,9 @@ def run_newsroom(topic: str, llm: LLM, max_articles: int = 5, verbose: bool = Tr
     else:
         step("researcher", skipped=True, articles=len(articles))
 
-    summarizer, verifier = Summarizer(llm), Verifier(verifier_llm or llm)
+    summarizer, verifier = Summarizer(llm), Verifier(
+        verifier_llm or llm, min_quote_chars=min_quote_chars, entailment=entailment
+    )
     verified = []
     for i, a in enumerate(articles):
         try:

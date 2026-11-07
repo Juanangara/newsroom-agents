@@ -17,7 +17,8 @@ def load_snapshot(path: str | Path) -> tuple[str, list[Article]]:
 
 
 def evaluate(model_name: str, llm: LLM, snapshots: list[str | Path],
-             verifier_llm: LLM | None = None, verifier_name: str = "self") -> dict:
+             verifier_llm: LLM | None = None, verifier_name: str = "self",
+             entailment: bool = False, min_quote_chars: int = 100) -> dict:
     """Run the team on every snapshot and aggregate the metrics.
 
     With `verifier_llm`, `llm` writes (summaries + report) but a fixed model does the fact-checking,
@@ -29,7 +30,8 @@ def evaluate(model_name: str, llm: LLM, snapshots: list[str | Path],
     t0 = time.time()
     for path in snapshots:
         topic, arts = load_snapshot(path)
-        r = run_newsroom(topic, llm, articles=arts, verbose=False, verifier_llm=verifier_llm)
+        r = run_newsroom(topic, llm, articles=arts, verbose=False, verifier_llm=verifier_llm,
+                         entailment=entailment, min_quote_chars=min_quote_chars)
         n_fail = sum(1 for s in r.trace if s["agent"] == "error")
         failed += n_fail
         total_articles += len(arts)
@@ -79,7 +81,8 @@ def free_gpu() -> None:
 
 
 def run_benchmark(model_ids: list[str], snapshots: list[str | Path], out_dir: str | Path = "results",
-                  verifier_id: str | None = None, tag: str = "self") -> list[dict]:
+                  verifier_id: str | None = None, tag: str = "self",
+                  entailment: bool = False) -> list[dict]:
     """Benchmark each model. With `verifier_id`, that model fact-checks for everyone (loaded once, kept on
     the GPU next to the model being tested). Results go to `benchmark_<tag>.json/.md`."""
     from .llm import HFLocalLLM
@@ -91,7 +94,8 @@ def run_benchmark(model_ids: list[str], snapshots: list[str | Path], out_dir: st
     for mid in model_ids:
         print(f"== {mid} (verifier: {verifier_id or 'self'})")
         llm = verifier if mid == verifier_id else HFLocalLLM(mid)
-        results.append(evaluate(mid, llm, snapshots, verifier_llm=verifier, verifier_name=verifier_id or "self"))
+        results.append(evaluate(mid, llm, snapshots, verifier_llm=verifier,
+                                verifier_name=verifier_id or "self", entailment=entailment))
         if llm is not verifier:
             del llm
         free_gpu()
