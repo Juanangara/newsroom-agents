@@ -4,10 +4,12 @@ import time
 
 from .agents import Editor, citation_coverage, Researcher, Summarizer, Verifier
 from .llm import LLM
-from .schemas import Report
+from .schemas import Article, Report
 
 
-def run_newsroom(topic: str, llm: LLM, max_articles: int = 5, verbose: bool = True) -> Report:
+def run_newsroom(topic: str, llm: LLM, max_articles: int = 5, verbose: bool = True,
+                 articles: list[Article] | None = None) -> Report:
+    """Run the team. Pass `articles` to skip the Researcher (fixed inputs, e.g. for benchmarks)."""
     trace: list[dict] = []
 
     def step(agent: str, **info):
@@ -15,8 +17,11 @@ def run_newsroom(topic: str, llm: LLM, max_articles: int = 5, verbose: bool = Tr
         if verbose:
             print(f"[{agent}] " + ", ".join(f"{k}={v}" for k, v in info.items()))
 
-    articles = Researcher(llm, max_articles=max_articles).run(topic)
-    step("researcher", articles=len(articles), titles=[a.title[:50] for a in articles])
+    if articles is None:
+        articles = Researcher(llm, max_articles=max_articles).run(topic)
+        step("researcher", articles=len(articles), titles=[a.title[:50] for a in articles])
+    else:
+        step("researcher", skipped=True, articles=len(articles))
 
     summarizer, verifier = Summarizer(llm), Verifier(llm)
     verified = []

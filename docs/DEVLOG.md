@@ -42,10 +42,18 @@ decisions taken. Test topic: "inteligencia artificial en Colombia" (the pipeline
 - `is_headline_echo`: claims that merely restate the article title are dropped.
 - Unit tests for both. (Not yet re-measured on Colab.)
 
+## Iteration 4: benchmark harness
+- `scripts/snapshot_articles.py` freezes real articles to JSON (`data/`: 2 topics x 8 articles) so every
+  model sees identical inputs; `run_newsroom(..., articles=...)` skips the Researcher.
+- `newsroom.benchmark` runs each model over the snapshots and reports grounding, facts supported/proposed,
+  citation coverage, JSON failures and time; results are saved after every model (Colab disconnects).
+- Bug found while writing its test: `extract_json` returned the inner object for a one-element list
+  (`[{"id":0,...}]`), so the Verifier silently lost its answer. Fixed + regression test.
+- Models compared (no paid APIs): Qwen2.5-3B, Qwen2.5-7B, Phi-3.5-mini, all 4-bit. **Not yet run.**
+
 ## Next steps (in order)
 1. [x] Stricter verification in code (numbers / proper nouns in the quote, reject headline echoes).
-2. [ ] Reproducible benchmark: fixed article set, compare Qwen 3B / Qwen 7B / Claude on grounding,
-       citation coverage and dropped facts.
+2. [~] Reproducible benchmark: harness done; run `notebooks/benchmark.ipynb` on Colab and record the table here.
 3. [ ] Example report and results table in the README.
 4. [ ] Migrate orchestration to LangGraph with a retry loop when an article's grounding is low
        (only if the benchmark shows it helps).

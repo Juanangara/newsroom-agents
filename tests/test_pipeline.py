@@ -53,3 +53,25 @@ def test_headline_echo_is_rejected():
     title = "Colombia busca en la inteligencia artificial una respuesta a los retos de su sistema de salud"
     assert is_headline_echo("Colombia busca en la IA una respuesta a los retos de su sistema de salud", title)
     assert not is_headline_echo("El 47% de las empresas no encuentra personal capacitado", title)
+
+
+def test_benchmark_with_fixed_articles(tmp_path):
+    import json
+    from newsroom.benchmark import evaluate, to_markdown_table
+    snap = tmp_path / "s.json"
+    snap.write_text(json.dumps({"topic": "dólar", "articles": [
+        {"title": "A", "url": "u", "text": "El dólar cerró en 4000 pesos hoy."}]}), encoding="utf-8")
+    llm = FakeLLM([
+        '{"summary": "x", "key_facts": ["El dólar cerró en 4000 pesos"]}',
+        '[{"id": 0, "quote": "El dólar cerró en 4000 pesos hoy."}]',
+        "# T\n- Dólar en 4000 [1]",
+    ])
+    res = evaluate("fake", llm, [snap])
+    assert res["grounding_rate"] == 1.0 and res["citation_coverage"] == 1.0
+    assert res["json_failures"] == "0/1"
+    assert "| fake |" in to_markdown_table([res])
+
+
+def test_extract_json_single_element_list_stays_a_list():
+    assert extract_json('[{"id": 0, "quote": "x"}]') == [{"id": 0, "quote": "x"}]
+    assert extract_json('Sure: {"a": [1, 2]}') == {"a": [1, 2]}

@@ -13,7 +13,9 @@ class LLM(Protocol):
 def extract_json(text: str):
     """Parse the first JSON object/array in a model reply (tolerates ``` fences and chatter)."""
     text = re.sub(r"```(?:json)?", "", text).strip()
-    for opener, closer in (("{", "}"), ("[", "]")):
+    # try whichever structure opens first, so '[{"a": 1}]' is parsed as a list, not as its inner object
+    pairs = sorted((("{", "}"), ("[", "]")), key=lambda p: (text.find(p[0]) == -1, text.find(p[0])))
+    for opener, closer in pairs:
         start, end = text.find(opener), text.rfind(closer)
         if start != -1 and end > start:
             try:
