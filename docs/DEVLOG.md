@@ -223,6 +223,36 @@ sample (risk of overfitting). Treat the numbers as directional.
   re-running the benchmark. 17 unit tests. **Judge not yet measured on Colab; it is off by default until it is.**
 - Caveat: 100 characters was chosen by looking at the same sample it is evaluated on.
 
+## Entailment judge vs. hand labels (Qwen2.5-7B judge, 49 labelled facts)
+Raw output: `results/judge_eval.json` (includes all 17 disagreements with the labels).
+
+| Rule | Accepts | Precision (95% CI) | Recall | False accepts |
+|---|---|---|---|---|
+| no filter (verifier's quote only) | 49 | 0.61 [0.47, 0.74] | 1.00 | 19 |
+| lexical (numbers + quote length >= 100) | 39 | 0.69 [0.54, 0.81] | 0.90 | 12 |
+| judge alone | 27 | 0.74 [0.55, 0.87] | 0.67 | 7 |
+| lexical AND judge | 21 | **0.81** [0.60, 0.92] | 0.57 | 4 |
+
+### Findings
+1. **The judge helps, but not decisively.** Precision rises with each layer (0.61 -> 0.69 -> 0.74 -> 0.81),
+   yet the 95% intervals overlap almost completely at n = 49, so none of the steps is a statistically
+   established improvement. Every extra layer costs recall (0.90 -> 0.57).
+2. **The 7B judge is noisy and its stated reasons cannot be trusted.** Several false rejections cite
+   differences that do not exist: "year in claim differs from quote" (both say 2025), "different number of
+   articles" for 93 of 95 vs 93 of 95. In other cases it nitpicks ("early 2026" vs "2026").
+3. **It misses what the lexical rules catch, and vice versa.** The judge accepted a fact with the number
+   "2,3 salarios minimos" absent from the quote (the number check catches it) and a senator's warning stated
+   as fact (nothing lexical can). Hence "lexical AND judge" has the best precision.
+4. **Part of the disagreement is labeller strictness, not judge error.** Some rows labelled unsupported are
+   arguable (e.g. "takes effect on April 1, 2027" vs "vigencia diferida al 1 de abril de 2027"). One labeller
+   and no inter-annotator agreement: label noise alone can move these numbers by several points.
+5. Facts were still mostly English against Spanish quotes, which probably hurts a small judge.
+
+### Decision
+Keep `entailment=False` as the default. `lexical AND judge` is available (`entailment=True`) as a
+high-precision / low-recall mode, appropriate when a false claim is worse than a missing one.
+Not adopting the judge by default avoids claiming an improvement the data do not establish.
+
 ## Next steps (in order)
 1. [x] Stricter verification in code (numbers / proper nouns in the quote, reject headline echoes).
 2. [x] Reproducible benchmark: harness + run 1 done (see above).
