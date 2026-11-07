@@ -22,6 +22,8 @@ class ArticleSummary(BaseModel):
 class VerifiedSummary(ArticleSummary):
     supported_facts: list[str] = Field(default_factory=list)
     dropped_facts: list[str] = Field(default_factory=list)
+    # fact -> why it was dropped: no_quote | quote_not_in_source | details_missing | headline_echo
+    drop_reasons: dict[str, str] = Field(default_factory=dict)
 
     @property
     def grounding_rate(self) -> float:

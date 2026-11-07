@@ -51,9 +51,49 @@ decisions taken. Test topic: "inteligencia artificial en Colombia" (the pipeline
   (`[{"id":0,...}]`), so the Verifier silently lost its answer. Fixed + regression test.
 - Models compared (no paid APIs): Qwen2.5-3B, Qwen2.5-7B, Phi-3.5-mini, all 4-bit. **Not yet run.**
 
+## Benchmark run 1 (Colab T4, 4-bit, greedy decoding, 2 topics x 8 articles = 16 articles)
+
+| Model | Grounding | Facts supported / proposed | JSON failures | Time (s) |
+|---|---|---|---|---|
+| Qwen2.5-3B-Instruct | 0.18 | 9 / 51 | 0/16 | 524 |
+| Qwen2.5-7B-Instruct | **0.32** | **21 / 65** | 0/16 | 597 |
+| Phi-3.5-mini-instruct | 0.20 | 14 / 69 | 1/16 | 843 |
+
+Raw output: `results/benchmark_run1.json` and `results/benchmark_run1.md`.
+
+### Findings
+1. **Model size helped.** The 7B model supported more than twice as many facts as the 3B (21 vs 9) with a
+   higher rate, and followed the output format. Phi-3.5-mini proposed the most facts but supported few and
+   was the slowest.
+2. **The `citation_coverage` column of this run is invalid (it showed 1.00 for every model).** The old
+   metric returned 1.0 for a report with no bullets and counted empty bullets such as `- [1]` as cited.
+   Qwen 3B actually produced exactly that on one topic (a paragraph plus empty `- [1]`, `- [2]` bullets) and
+   listed a source ([7]) it never used. Removed from the table above; the metric was fixed (iteration 5).
+3. **Format-following differs a lot between models**, independently of fact quality: Phi-3.5 appended a stray
+   "Citas:" block and an "Las fuentes: [3], [4]" line; Qwen 3B ignored the bullet format.
+4. **Verification has limits.** A garbled claim from the 7B report ("an increase of 100% in financial
+   obligations over the last decades") passed: a real quote that contains the numbers can still be
+   misread. The checks are necessary but not sufficient.
+
+### Caveats (read before quoting these numbers)
+- Each model verifies **its own** facts, so "grounding" mixes generation quality with verification quality.
+  A 3B model may be a worse verifier, not only a worse summarizer.
+- Single run, greedy decoding, 16 articles: differences of a few points are not significant.
+- We do not yet know *why* ~70-80% of facts are dropped (hallucination vs. a strict filter). Run 1 did not
+  record drop reasons.
+
+## Iteration 5: measurement fixes (after run 1)
+- `citation_coverage` now counts only content lines (headings and empty bullets are ignored) and scores a
+  report with no content as 0.0.
+- Every dropped fact now records a reason (`no_quote`, `quote_not_in_source`, `details_missing`,
+  `headline_echo`); the benchmark aggregates them in `drop_reasons`.
+- 10 unit tests, including regressions for both. **Not yet re-run on Colab.**
+
 ## Next steps (in order)
 1. [x] Stricter verification in code (numbers / proper nouns in the quote, reject headline echoes).
-2. [~] Reproducible benchmark: harness done; run `notebooks/benchmark.ipynb` on Colab and record the table here.
-3. [ ] Example report and results table in the README.
-4. [ ] Migrate orchestration to LangGraph with a retry loop when an article's grounding is low
+2. [x] Reproducible benchmark: harness + run 1 done (see above).
+3. [ ] Re-run the benchmark with the fixed metric and drop reasons; use one fixed verifier (e.g. the 7B)
+       for all models to separate generation quality from verification quality.
+4. [ ] Example report in the README.
+5. [ ] Migrate orchestration to LangGraph with a retry loop when an article's grounding is low
        (only if the benchmark shows it helps).

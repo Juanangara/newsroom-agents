@@ -75,3 +75,25 @@ def test_benchmark_with_fixed_articles(tmp_path):
 def test_extract_json_single_element_list_stays_a_list():
     assert extract_json('[{"id": 0, "quote": "x"}]') == [{"id": 0, "quote": "x"}]
     assert extract_json('Sure: {"a": [1, 2]}') == {"a": [1, 2]}
+
+
+def test_citation_coverage_ignores_empty_bullets_and_empty_reports():
+    from newsroom.agents import citation_coverage
+    assert citation_coverage("# T\nUn párrafo sin cita.\n- [1]\n- [2]\n## Fuentes\n[1] x") == 0.0
+    assert citation_coverage("# T\n- Hecho concreto aquí [1]\n- Otro hecho sin cita\n") == 0.5
+    assert citation_coverage("# Solo titulo\n") == 0.0
+
+
+def test_drop_reasons_are_recorded():
+    from newsroom.agents import Verifier
+    from newsroom.schemas import ArticleSummary
+    art = Article(title="Titular distinto", url="u", text="El dólar cerró en 4000 pesos hoy en Bogotá.")
+    facts = ["x sin cita", "y cita falsa", "El dólar cerró en 5000 pesos", "El dólar cerró en 4000 pesos"]
+    s = ArticleSummary(article_id=0, title="t", url="u", summary="", key_facts=facts)
+    llm = FakeLLM(['[{"id":0,"quote":null},{"id":1,"quote":"algo que no está en el texto"},'
+                   '{"id":2,"quote":"El dólar cerró en 4000 pesos hoy"},{"id":3,"quote":"El dólar cerró en 4000 pesos"}]'])
+    v = Verifier(llm).run(s, art)
+    assert v.drop_reasons["x sin cita"] == "no_quote"
+    assert v.drop_reasons["y cita falsa"] == "quote_not_in_source"
+    assert v.drop_reasons["El dólar cerró en 5000 pesos"] == "details_missing"
+    assert v.supported_facts == ["El dólar cerró en 4000 pesos"]

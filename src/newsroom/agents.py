@@ -105,15 +105,21 @@ class Verifier:
         for r in rows if isinstance(rows, list) else []:
             if isinstance(r, dict) and isinstance(r.get("id"), int) and isinstance(r.get("quote"), str):
                 quotes[r["id"]] = r["quote"]
-        ok = [
-            f for i, f in enumerate(s.key_facts)
-            if i in quotes
-            and quote_in_text(quotes[i], a.text)
-            and details_in_quote(f, quotes[i])
-            and not is_headline_echo(f, a.title)
-        ]
-        bad = [f for f in s.key_facts if f not in ok]
-        return VerifiedSummary(**s.model_dump(), supported_facts=ok, dropped_facts=bad)
+        ok, reasons = [], {}
+        for i, f in enumerate(s.key_facts):
+            q = quotes.get(i)
+            if q is None:
+                reasons[f] = "no_quote"
+            elif not quote_in_text(q, a.text):
+                reasons[f] = "quote_not_in_source"
+            elif not details_in_quote(f, q):
+                reasons[f] = "details_missing"
+            elif is_headline_echo(f, a.title):
+                reasons[f] = "headline_echo"
+            else:
+                ok.append(f)
+        bad = [f for f in s.key_facts if f in reasons]
+        return VerifiedSummary(**s.model_dump(), supported_facts=ok, dropped_facts=bad, drop_reasons=reasons)
 
 
 class Editor:
@@ -141,7 +147,18 @@ class Editor:
 
 
 def citation_coverage(markdown: str) -> float:
-    """Fraction of bullet lines (before '## Fuentes') that carry a [n] citation."""
+    """Fraction of content lines (before '## Fuentes') that carry a [n] citation.
+
+    Headings and lines with fewer than 2 words besides citations (e.g. an empty '- [1]') are not
+    content. A report with no content lines scores 0.0, not 1.0.
+    """
     body = markdown.split("## Fuentes")[0]
-    bullets = [l for l in body.splitlines() if re.match(r"\s*[-*•]\s+\S", l)]
-    return 1.0 if not bullets else sum(bool(re.search(r"\[\d+\]", l)) for l in bullets) / len(bullets)
+    content = []
+    for line in body.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        text = re.sub(r"\[\d+\]", "", re.sub(r"^[-*•]\s*", "", line))
+        if len(re.findall(r"\w+", text)) >= 2:
+            content.append(line)
+    return sum(bool(re.search(r"\[\d+\]", l)) for l in content) / len(content) if content else 0.0

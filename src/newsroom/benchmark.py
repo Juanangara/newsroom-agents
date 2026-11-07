@@ -20,6 +20,7 @@ def evaluate(model_name: str, llm: LLM, snapshots: list[str | Path]) -> dict:
     """Run the team on every snapshot and aggregate the metrics."""
     proposed = supported = 0
     cov, failed, total_articles, reports = [], 0, 0, []
+    reasons: dict[str, int] = {}
     t0 = time.time()
     for path in snapshots:
         topic, arts = load_snapshot(path)
@@ -29,6 +30,9 @@ def evaluate(model_name: str, llm: LLM, snapshots: list[str | Path]) -> dict:
         total_articles += len(arts)
         proposed += sum(len(v.supported_facts) + len(v.dropped_facts) for v in r.sources)
         supported += sum(len(v.supported_facts) for v in r.sources)
+        for v in r.sources:
+            for why in v.drop_reasons.values():
+                reasons[why] = reasons.get(why, 0) + 1
         cov.append(r.citation_coverage)
         reports.append({"topic": topic, "markdown": r.markdown})
     return {
@@ -39,6 +43,7 @@ def evaluate(model_name: str, llm: LLM, snapshots: list[str | Path]) -> dict:
         "citation_coverage": round(sum(cov) / len(cov), 3) if cov else 0.0,
         "json_failures": f"{failed}/{total_articles}",
         "seconds": round(time.time() - t0),
+        "drop_reasons": reasons,
         "reports": reports,
     }
 
