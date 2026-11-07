@@ -25,6 +25,7 @@ def evaluate(model_name: str, llm: LLM, snapshots: list[str | Path],
     proposed = supported = 0
     cov, failed, total_articles, reports = [], 0, 0, []
     reasons: dict[str, int] = {}
+    evidence: list[dict] = []
     t0 = time.time()
     for path in snapshots:
         topic, arts = load_snapshot(path)
@@ -35,6 +36,7 @@ def evaluate(model_name: str, llm: LLM, snapshots: list[str | Path],
         proposed += sum(len(v.supported_facts) + len(v.dropped_facts) for v in r.sources)
         supported += sum(len(v.supported_facts) for v in r.sources)
         for v in r.sources:
+            evidence.extend({"topic": topic, **e} for e in v.evidence)
             for why in v.drop_reasons.values():
                 reasons[why] = reasons.get(why, 0) + 1
         cov.append(r.citation_coverage)
@@ -49,6 +51,7 @@ def evaluate(model_name: str, llm: LLM, snapshots: list[str | Path],
         "json_failures": f"{failed}/{total_articles}",
         "seconds": round(time.time() - t0),
         "drop_reasons": reasons,
+        "evidence": evidence,
         "reports": reports,
     }
 

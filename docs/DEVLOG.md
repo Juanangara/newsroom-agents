@@ -96,6 +96,38 @@ Raw output: `results/benchmark_run1.json` and `results/benchmark_run1.md`.
   `results/benchmark_<tag>.json|md`, with a `verifier` column and per-model `drop_reasons`.
 - Test confirms the verifier model receives only the fact-checking call. **Not yet run on Colab.**
 
+## Benchmark run 2: fixed verifier (Qwen2.5-7B fact-checks every model)
+
+| Model | Grounding | Facts supported / proposed | Citation coverage | JSON failures | Time (s) |
+|---|---|---|---|---|---|
+| Qwen2.5-3B-Instruct | 0.31 | 16 / 51 | 0.88 | 0/16 | 543 |
+| Qwen2.5-7B-Instruct | 0.32 | 21 / 65 | 1.00 | 0/16 | 595 |
+| Phi-3.5-mini-instruct | **0.41** | **28 / 69** | 0.94 | 1/16 | 878 |
+
+Drop reasons (same run): `details_missing` 32 / 36 / 37, `quote_not_in_source` 1 / 5 / 3, `no_quote` 2 / 3 / 1
+(3B / 7B / Phi).
+
+### Findings
+1. **Run 1's conclusion ("model size helped") was confounded by verifier quality.** With the same 7B verifier
+   the 3B goes 0.18 -> 0.31 and Phi 0.20 -> 0.41; the ranking changes. Self-verification numbers should not be
+   used to compare generators.
+2. **Sanity check passed:** the 7B scores identically (21 / 65) as its own verifier in both runs, and the
+   facts proposed per model (51 / 65 / 69) are identical across runs (greedy decoding is deterministic).
+3. **~90% of dropped facts were dropped by our own number / proper-noun filter (`details_missing`)**, not by
+   missing or invented quotes (1-5 per model). So the 0.3-0.4 grounding mostly measures how strict that
+   filter is; it is **not** evidence that 60-70% of facts are hallucinated. The filter is probably too strict
+   (e.g. a claim says "Colombia" while the quote says "el pais"), but this is unverified: the run stored
+   only counts, not the facts.
+4. Open question: Phi may lead because it writes more extractive facts that are easier to back with a quote,
+   not because it is a better model.
+
+## Iteration 7: store evidence per fact
+- Each fact now records its quote and every check separately (`quote_in_source`, numbers / names missing
+  in the quote and in the whole source, headline echo). `details_missing` is split into `number_missing`
+  and `name_missing`. The benchmark saves all of it under `evidence`, so alternative filter rules can be
+  evaluated offline without GPU time.
+- New "diagnostic run" cell in the benchmark notebook (3B only, ~15 min).
+
 ## Next steps (in order)
 1. [x] Stricter verification in code (numbers / proper nouns in the quote, reject headline echoes).
 2. [x] Reproducible benchmark: harness + run 1 done (see above).

@@ -64,18 +64,23 @@ def quote_in_text(quote: str, text: str, min_ratio: float = 0.8) -> bool:
 _NUM = re.compile(r"\d[\d.,]*")
 
 
+def numbers_missing(claim: str, text: str) -> list[str]:
+    """Numbers in the claim that do not appear in `text` (a quote or the whole source)."""
+    t = _norm(text)
+    return [n for n in _NUM.findall(claim) if _norm(n).strip(".,") not in t]
+
+
+def names_missing(claim: str, text: str) -> list[str]:
+    """Capitalised words in the claim (proper-noun candidates, not the first word) absent from `text`."""
+    t = _norm(text)
+    words = re.findall(r"[\wÁÉÍÓÚÑáéíóúñ]+", claim)
+    return [w for i, w in enumerate(words) if i > 0 and w[0].isupper() and not w.isdigit() and _norm(w) not in t]
+
+
 def details_in_quote(claim: str, quote: str) -> bool:
     """Numbers and proper nouns in the claim must appear in the evidence quote.
     A real quote that does not contain the claim's specifics does not support it."""
-    q = _norm(quote)
-    for n in _NUM.findall(claim):
-        if _norm(n).strip(".,") not in q:
-            return False
-    words = re.findall(r"[\wÁÉÍÓÚÑáéíóúñ]+", claim)
-    for i, w in enumerate(words):
-        if i > 0 and w[0].isupper() and not w.isdigit() and _norm(w) not in q:
-            return False
-    return True
+    return not numbers_missing(claim, quote) and not names_missing(claim, quote)
 
 
 def is_headline_echo(claim: str, title: str, threshold: float = 0.75) -> bool:
@@ -105,21 +110,36 @@ class Verifier:
         for r in rows if isinstance(rows, list) else []:
             if isinstance(r, dict) and isinstance(r.get("id"), int) and isinstance(r.get("quote"), str):
                 quotes[r["id"]] = r["quote"]
-        ok, reasons = [], {}
+        ok, reasons, evidence = [], {}, []
         for i, f in enumerate(s.key_facts):
             q = quotes.get(i)
+            # Every signal is recorded separately so alternative filter rules can be evaluated offline.
+            ev = {"article": a.title[:70], "fact": f, "quote": q, "headline_echo": is_headline_echo(f, a.title),
+                  "quote_in_source": None, "numbers_missing_in_quote": None, "names_missing_in_quote": None,
+                  "numbers_missing_in_source": numbers_missing(f, a.text),
+                  "names_missing_in_source": names_missing(f, a.text)}
             if q is None:
                 reasons[f] = "no_quote"
-            elif not quote_in_text(q, a.text):
-                reasons[f] = "quote_not_in_source"
-            elif not details_in_quote(f, q):
-                reasons[f] = "details_missing"
-            elif is_headline_echo(f, a.title):
-                reasons[f] = "headline_echo"
             else:
+                ev["quote_in_source"] = quote_in_text(q, a.text)
+                ev["numbers_missing_in_quote"] = numbers_missing(f, q)
+                ev["names_missing_in_quote"] = names_missing(f, q)
+                if not ev["quote_in_source"]:
+                    reasons[f] = "quote_not_in_source"
+                elif ev["numbers_missing_in_quote"]:
+                    reasons[f] = "number_missing"
+                elif ev["names_missing_in_quote"]:
+                    reasons[f] = "name_missing"
+                elif ev["headline_echo"]:
+                    reasons[f] = "headline_echo"
+            if f not in reasons:
                 ok.append(f)
+            ev["supported"] = f not in reasons
+            ev["reason"] = reasons.get(f)
+            evidence.append(ev)
         bad = [f for f in s.key_facts if f in reasons]
-        return VerifiedSummary(**s.model_dump(), supported_facts=ok, dropped_facts=bad, drop_reasons=reasons)
+        return VerifiedSummary(**s.model_dump(), supported_facts=ok, dropped_facts=bad,
+                               drop_reasons=reasons, evidence=evidence)
 
 
 class Editor:

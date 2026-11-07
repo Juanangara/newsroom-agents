@@ -95,7 +95,7 @@ def test_drop_reasons_are_recorded():
     v = Verifier(llm).run(s, art)
     assert v.drop_reasons["x sin cita"] == "no_quote"
     assert v.drop_reasons["y cita falsa"] == "quote_not_in_source"
-    assert v.drop_reasons["El dólar cerró en 5000 pesos"] == "details_missing"
+    assert v.drop_reasons["El dólar cerró en 5000 pesos"] == "number_missing"
     assert v.supported_facts == ["El dólar cerró en 4000 pesos"]
 
 
