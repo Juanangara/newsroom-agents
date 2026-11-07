@@ -121,6 +121,21 @@ Drop reasons (same run): `details_missing` 32 / 36 / 37, `quote_not_in_source` 1
 4. Open question: Phi may lead because it writes more extractive facts that are easier to back with a quote,
    not because it is a better model.
 
+## Benchmark run 3: self-verification again, with the fixed metric
+
+| Model | Grounding | Facts supported / proposed | Citation coverage | JSON failures | Time (s) |
+|---|---|---|---|---|---|
+| Qwen2.5-3B-Instruct | 0.18 | 9 / 51 | 0.75 | 0/16 | 524 |
+| Qwen2.5-7B-Instruct | 0.32 | 21 / 65 | 1.00 | 0/16 | 584 |
+| Phi-3.5-mini-instruct | 0.20 | 14 / 69 | 1.00 | 1/16 | 830 |
+
+- Grounding and fact counts are **identical to run 1**: results reproduce exactly.
+- Citation coverage is now meaningful (the run-1 value of 1.00 for all models was an artefact). Only
+  Qwen 3B drops below 1.0. Coverage is not comparable across configurations, because the Editor sees
+  different verified facts depending on who verifies.
+- The metric does not penalise Phi's stray "Citas:" lines, since they contain `[n]`; it measures citation
+  presence, not format cleanliness.
+
 ## Iteration 7: store evidence per fact
 - Each fact now records its quote and every check separately (`quote_in_source`, numbers / names missing
   in the quote and in the whole source, headline echo). `details_missing` is split into `number_missing`

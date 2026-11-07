@@ -28,15 +28,23 @@ topic ─► Researcher ─► Summarizer ─► Verifier ─► Editor ─► r
 Benchmark on a frozen set of 16 real Colombian news articles (2 topics), Colab T4, 4-bit models.
 **Grounding** = facts the Verifier could back with a verbatim quote from the source / facts proposed.
 
-| Model | Grounding | Facts supported / proposed | JSON failures | Time (s) |
-|---|---|---|---|---|
-| Qwen2.5-3B-Instruct | 0.18 | 9 / 51 | 0/16 | 524 |
-| Qwen2.5-7B-Instruct | **0.32** | **21 / 65** | 0/16 | 597 |
-| Phi-3.5-mini-instruct | 0.20 | 14 / 69 | 1/16 | 843 |
+Two setups: the models verify their own facts (**self**), or one fixed model (Qwen2.5-7B) fact-checks
+for all of them (**fixed verifier**), which isolates generation quality.
 
-Caveats: single run, and each model verifies its own facts, so the numbers mix generation and
-verification quality. The full analysis, bugs found along the way and what is still unknown are in
-[`docs/DEVLOG.md`](docs/DEVLOG.md).
+| Model | Grounding (self) | Grounding (fixed verifier) | Facts supported / proposed (fixed) | Citation coverage (fixed) | JSON failures |
+|---|---|---|---|---|---|
+| Qwen2.5-3B-Instruct | 0.18 | 0.31 | 16 / 51 | 0.88 | 0/16 |
+| Qwen2.5-7B-Instruct | 0.32 | 0.32 | 21 / 65 | 1.00 | 0/16 |
+| Phi-3.5-mini-instruct | 0.20 | **0.41** | **28 / 69** | 0.94 | 1/16 |
+
+What this shows, and what it does not:
+- The ranking depends on who verifies, so self-verified scores should not be used to compare generators.
+- Runs are deterministic: repeating a configuration gives identical numbers.
+- About 90% of discarded facts are removed by the number / proper-noun filter, not by missing quotes, so
+  grounding of 0.3-0.4 is **not** evidence that most facts are hallucinated. The filter is being re-evaluated.
+- Single set of 16 articles; small differences are not significant.
+
+Full analysis, bugs found along the way and open questions: [`docs/DEVLOG.md`](docs/DEVLOG.md).
 
 ## Run on Colab
 Open `notebooks/colab.ipynb`, enable a T4 GPU and run all cells. Or manually:
