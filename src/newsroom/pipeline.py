@@ -9,7 +9,8 @@ from .schemas import Article, Report
 
 def run_newsroom(topic: str, llm: LLM, max_articles: int = 5, verbose: bool = True,
                  articles: list[Article] | None = None, verifier_llm: LLM | None = None,
-                 min_quote_chars: int = 100, entailment: bool = False) -> Report:
+                 min_quote_chars: int = 100, entailment: bool = False,
+                 show_quotes: bool = True) -> Report:
     """Run the team. Pass `articles` to skip the Researcher (fixed inputs, e.g. for benchmarks).
     Pass `verifier_llm` to fact-check with a different model than the one that writes (default: same)."""
     trace: list[dict] = []
@@ -39,7 +40,7 @@ def run_newsroom(topic: str, llm: LLM, max_articles: int = 5, verbose: bool = Tr
         step("summarizer+verifier", article=i, kept=len(v.supported_facts), dropped=len(v.dropped_facts))
         verified.append(v)
 
-    editor = Editor(llm)
+    editor = Editor(llm, show_quotes=show_quotes)
     md = editor.run(topic, verified)
     cov = citation_coverage(md)
     step("editor", chars=len(md), citation_coverage=round(cov, 2), summary_grounded=editor.summary_grounded)

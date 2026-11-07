@@ -340,6 +340,15 @@ Round 2 (41 Spanish facts) was not used to design the rules or the judge prompt.
 `entailment` stays off by default and is documented as not helpful with a 7B judge. `min_quote_chars=100` stays
 (it removes truncated quotes, which are never right) but its measured benefit is weak.
 
+## Iteration 12: show the evidence in the report
+Since about 1 in 5 verified facts was still not supported by its quote (round 2: 9 of 41), the report now prints the
+evidence quote under each bullet (`show_quotes=True`, truncated at 300 characters). A reader can check a claim at a
+glance; for example, "the reform faces controversy between the opposition and the government" visibly rests on a quote
+that says no such thing. The quote line starts with `>` and is not counted as an uncited claim by `citation_coverage`.
+The benchmark also records how often the Editor's summary was discarded and how many incomplete facts were removed.
+23 unit tests. `notebooks/benchmark_kaggle.ipynb` re-runs the model comparison with the current pipeline.
+**Not yet run.**
+
 ## Next steps (in order)
 1. [x] Stricter verification in code (numbers / proper nouns in the quote, reject headline echoes).
 2. [x] Reproducible benchmark: harness + run 1 done (see above).

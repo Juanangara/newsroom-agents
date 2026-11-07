@@ -13,7 +13,7 @@ topic ─► Researcher ─► Summarizer ─► Verifier ─► Editor ─► r
 | **Researcher** | Searches Google News (RSS), deduplicates, filters by relevance and fetches the full text | list of ids (JSON) |
 | **Summarizer** | Summarizes each article and extracts verifiable facts | `{summary, key_facts[]}` |
 | **Verifier** | Must quote the source for each fact; code checks the quote exists in the source, is at least 100 characters and contains the claim's numbers. Unsupported facts are **dropped**. An optional LLM judge (`entailment=True`, off by default) did **not** improve precision on held-out labels with a 7B model - see the DEVLOG | `[{id, quote}]` |
-| **Editor** | Bullets are the verified facts themselves, each with its `[n]` citation, assembled in code. The model only proposes a title and short summary, discarded if they add numbers or names not in the facts | markdown |
+| **Editor** | Bullets are the verified facts themselves, each with its `[n]` citation, assembled in code. Each bullet shows its evidence quote underneath. The model only proposes a title and short summary, discarded if they add numbers or names not in the facts | markdown |
 
 ## Why it is more than a demo
 - **Explicit verification:** the report only contains facts the Verifier found in the source.

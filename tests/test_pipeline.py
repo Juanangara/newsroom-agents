@@ -223,3 +223,26 @@ def test_incomplete_facts_are_removed_by_the_summarizer():
     s = Summarizer(llm).run(0, Article(title="A", url="u", text="..."))
     assert s.key_facts == ["El dólar cerró en 4000 pesos"]
     assert s.discarded_incomplete == ["La muestra explora cómo la tecnología"]
+
+
+def test_editor_shows_evidence_quote_without_hurting_citation_coverage():
+    from newsroom.agents import Editor, citation_coverage
+    fact = "El dólar cerró en 4000 pesos hoy"
+    v = _item([fact])
+    v.evidence = [{"fact": fact, "quote": "El dólar cerró en 4000 pesos hoy, según el Banco de la República.", "supported": True}]
+    reply = '{"title": "T", "summary": "El dólar cerró estable."}'
+    with_q = Editor(FakeLLM([reply])).run("dólar", [v])
+    assert "  > «El dólar cerró en 4000 pesos hoy, según el Banco de la República.»" in with_q
+    assert citation_coverage(with_q) == 1.0           # the quote line is evidence, not an uncited claim
+    without_q = Editor(FakeLLM([reply]), show_quotes=False).run("dólar", [v])
+    assert ">" not in without_q.split("## Fuentes")[0]
+
+
+def test_long_quotes_are_truncated_in_the_report():
+    from newsroom.agents import Editor
+    fact = "El dólar cerró en 4000 pesos hoy"
+    v = _item([fact])
+    v.evidence = [{"fact": fact, "quote": "palabra " * 100, "supported": True}]
+    md = Editor(FakeLLM(['{"title": "T", "summary": ""}'])).run("dólar", [v])
+    line = next(l for l in md.splitlines() if l.strip().startswith(">"))
+    assert len(line) < 330 and "..." in line

@@ -250,8 +250,11 @@ class Editor:
         "expandidas ni explicaciones que no estén en ellos. Escribe en español."
     )
 
-    def __init__(self, llm: LLM):
+    def __init__(self, llm: LLM, show_quotes: bool = True):
+        """show_quotes: print the evidence quote under each bullet so a reader can check it. About 1 in 5
+        verified facts was still not supported by its quote in the hand-labelled sample."""
         self.llm = llm
+        self.show_quotes = show_quotes
         self.summary_grounded = True  # False if the model's summary had to be discarded
 
     @staticmethod
@@ -284,12 +287,18 @@ class Editor:
 
         bullets, seen = [], []
         for i, v in usable:
+            quotes = {e["fact"]: e["quote"] for e in v.evidence if e.get("supported") and e.get("quote")}
             for f in v.supported_facts:
                 text = f.strip().rstrip(".")
                 if any(SequenceMatcher(None, _norm(text), _norm(s)).ratio() > 0.9 for s in seen):
                     continue  # near-duplicate of a fact already listed
                 seen.append(text)
-                bullets.append(f"- {text} [{i + 1}]")
+                line = f"- {text} [{i + 1}]"
+                q = " ".join(quotes.get(f, "").split())
+                if self.show_quotes and q:
+                    q = q if len(q) <= 300 else q[:297].rstrip() + "..."
+                    line += "\n  > «" + q + "»"
+                bullets.append(line)
 
         cites = " ".join(f"[{i + 1}]" for i, _ in usable)
         parts = [f"# {title}"]
@@ -303,14 +312,14 @@ class Editor:
 def citation_coverage(markdown: str) -> float:
     """Fraction of content lines (before '## Fuentes') that carry a [n] citation.
 
-    Headings and lines with fewer than 2 words besides citations (e.g. an empty '- [1]') are not
+    Headings, evidence quotes (lines starting with '>') and lines with fewer than 2 words besides citations (e.g. an empty '- [1]') are not
     content. A report with no content lines scores 0.0, not 1.0.
     """
     body = markdown.split("## Fuentes")[0]
     content = []
     for line in body.splitlines():
         line = line.strip()
-        if not line or line.startswith("#"):
+        if not line or line.startswith(("#", ">")):
             continue
         text = re.sub(r"\[\d+\]", "", re.sub(r"^[-*•]\s*", "", line))
         if len(re.findall(r"\w+", text)) >= 2:
