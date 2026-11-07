@@ -49,6 +49,33 @@ What this shows, and what it does not:
 
 Full analysis, bugs found along the way and open questions: [`docs/DEVLOG.md`](docs/DEVLOG.md).
 
+## Example output
+Topic "reforma pensional Colombia", Qwen2.5-7B, 16-article benchmark run (excerpt; full report in
+[`results/example_report.md`](results/example_report.md)). Evidence quotes were attached offline from the
+Verifier's stored records, matching what `show_quotes=True` renders.
+
+```markdown
+# Reforma pensional en Colombia: avances y controversias
+
+La reforma pensional en Colombia fue aprobada por el Congreso sin cambios, pero enfrenta críticas sobre su impacto fiscal y la libertad de elección del ciudadano. La Corte Constitucional ordenó repetir el trámite debido a vicios de procedimiento, lo que ha generado nuevas discusiones y propuestas de contrarreforma. [1] [2] [3] [4] [5] [6] [7] [8]
+
+- El senador Andrés Forero advirtió que la reforma pensional agravará el pasivo fiscal y comprometerá el ahorro nacional [1]
+  > «El senador Andrés Forero advierte que el proyecto agravará el pasivo fiscal y comprometerá el ahorro nacional.»
+- La oposición impulsa una contrarreforma enfocada en garantizar la sostenibilidad financiera del sistema y la libertad de elección del ciudadano [1]
+  > «La oposición impulsa una contrarreforma enfocada en garantizar la sostenibilidad financiera del sistema y la libertad de elección del ciudadano.»
+- El Ministerio de Hacienda y Colpensiones solicitaron un plazo extra para la entrada en vigencia de la reforma pensional [1]
+  > «Han planteado que existe un impacto fiscal y por eso piden que se permita un plazo más largo para su entrada en vigencia.»
+- El Congreso de Colombia aprobó los 9 artículos de la reforma pensional del expresidente Gustavo Petro sin modificaciones [2]
+  > «La Cámara de Representantes tramita sin modificaciones los 9 artículos devueltos por la Corte Constitucional y evita una conciliación con el Senado sobre el tiempo»
+- La aprobación se logró sin el apoyo del ministro del Interior del actual gobierno [2]
+  > «En el debate se notó la ausencia del ministro del Interior de De la Espriella. El exministro Lara fue despedido hace una semana, y el nuevo minis»
+...
+```
+
+The quotes make weak bullets visible. The fourth bullet says the approval happened "without the Interior minister's
+support", while the quote only says the minister was absent: an interpretation, the kind of error that survives
+the quote check (see the DEVLOG).
+
 ## Run on Colab
 Open `notebooks/colab.ipynb`, enable a T4 GPU and run all cells. Or manually:
 

@@ -70,6 +70,8 @@ Findings:
 - With 48-70 facts per model the differences (0.71 vs 0.83) are within noise (overlapping Wilson intervals);
   I do not claim a winner. Phi yields the most verified facts (56) but is slowest.
 - Citation coverage is 1.00 by construction; it no longer discriminates.
+- The reports saved in this run contain no `>` quote lines, so the Kaggle clone probably predates the quote
+  feature (metrics are unaffected). The example report was rebuilt offline from the stored evidence.
 
 ## Benchmark run 1 (Colab T4, 4-bit, greedy decoding, 2 topics x 8 articles = 16 articles)
 
@@ -394,6 +396,6 @@ Findings:
 2. [x] Reproducible benchmark: harness + run 1 done (see above).
 3. [ ] Re-run the benchmark with the fixed metric and drop reasons; use one fixed verifier (e.g. the 7B)
        for all models to separate generation quality from verification quality.
-4. [ ] Example report in the README.
+4. [x] Example report in the README (`results/example_report.md`).
 5. [ ] Migrate orchestration to LangGraph with a retry loop when an article's grounding is low
        (only if the benchmark shows it helps).
