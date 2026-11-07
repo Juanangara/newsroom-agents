@@ -311,6 +311,35 @@ round 1.
    topic_only 1). No lexical rule can see them. This is the case for the meaning-level judge, which is the one
    component that has not yet been tested on held-out data.
 
+## Judge on held-out data (round 2): it does not help
+Raw output: `results/judge_eval_round1.json`, `results/judge_eval_round2_es.json` (all disagreements listed).
+Round 2 (41 Spanish facts) was not used to design the rules or the judge prompt.
+
+| Rule | Round 1 precision / recall | Round 2 precision / recall |
+|---|---|---|
+| no filter (verifier's quote only) | 0.61 / 1.00 | 0.80 / 0.88 |
+| lexical (numbers + quote >= 100 chars) | 0.69 / 0.90 | 0.79 / 0.84 |
+| judge alone | 0.74 / 0.67 | **0.79 / 0.47** |
+| lexical AND judge | 0.81 / 0.57 | **0.78 / 0.44** |
+
+### Findings
+1. **The round-1 gain did not replicate.** On held-out data the judge matches the precision of not filtering at all
+   (0.79 vs 0.80) while discarding more than half of the good facts. Round 1's result was partly fitted noise; the
+   95% intervals already overlapped there. The earlier "high-precision mode" claim is withdrawn.
+2. **The 7B judge's stated reasons are often wrong**, e.g. "claim adds a number not in the quote" for a number that is
+   in the quote (50.2), "different time frames" for a quote that contains both, "year and currency added" for a
+   year that is in the quote. Two rejections were unparseable replies (fail-closed).
+3. **What actually moved the numbers was fixing our own bugs**, not adding a verifier: the base rate of correct
+   quotes went from 0.61 to 0.78 after the Summarizer was made to write in the article's language.
+4. 9 of 41 facts are still unsupported (22%), all semantic errors; neither the lexical rules nor a 7B judge catch
+   them.
+5. Protocol note: rules and prompt were developed on round 1 and confirmed on round 2. Five round-2 labels were
+   revised after a review prompted by the assistant, so even round 2 is not perfectly clean.
+
+### Decision
+`entailment` stays off by default and is documented as not helpful with a 7B judge. `min_quote_chars=100` stays
+(it removes truncated quotes, which are never right) but its measured benefit is weak.
+
 ## Next steps (in order)
 1. [x] Stricter verification in code (numbers / proper nouns in the quote, reject headline echoes).
 2. [x] Reproducible benchmark: harness + run 1 done (see above).

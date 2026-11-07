@@ -1,0 +1,192 @@
+{
+ "n_labelled": 41,
+ "base_rate_supported": 0.78,
+ "lexical (numbers + quote length)": {
+  "accepts": 34,
+  "precision": 0.79,
+  "recall": 0.84,
+  "false_accepts": 7
+ },
+ "judge alone": {
+  "accepts": 19,
+  "precision": 0.79,
+  "recall": 0.47,
+  "false_accepts": 4
+ },
+ "lexical AND judge": {
+  "accepts": 18,
+  "precision": 0.78,
+  "recall": 0.44,
+  "false_accepts": 4
+ },
+ "disagreements": [
+  {
+   "id": 33,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "Claim adds number of articles fixed",
+   "fact": "Se subsanaron los nueve artículos devueltos por la Corte Constitucional",
+   "quote": "El 25 de agosto de 2026, la Corte Constitucional aprobó buena parte de la reforma pensional que fue aprobada en 2024 en la Cámara de Representantes, pero devolvió nueve artículos porque no se discutieron las proposiciones desde el Senado, lo que causó una serie de demandas."
+  },
+  {
+   "id": 11,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "unparseable judge reply",
+   "fact": "La compañía Wonderful entró a Colombia en 2026",
+   "quote": "Uno de ellos es Wonderful, una compañía de origen israelí que llegó al país a comienzos de 2026 con una propuesta enfocada en integrar esta tecnología a las operaciones de las organizaciones, más allá de los tradicionales chatbots y asistentes virtuales."
+  },
+  {
+   "id": 40,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "Quote is cut off",
+   "fact": "La exequibilidad se limitó a vicios de procedimiento en la formación de la ley",
+   "quote": null
+  },
+  {
+   "id": 0,
+   "label": 0,
+   "judge": true,
+   "judge_reason": "same ranking mentioned",
+   "fact": "Colombia ocupa el cuarto lugar en el Ilia",
+   "quote": "Colombia emerge con una posición notable: ocupa el cuarto lugar de América Latina con una puntuación global de 56.8 sobre 100."
+  },
+  {
+   "id": 20,
+   "label": 0,
+   "judge": true,
+   "judge_reason": "same topic, details match",
+   "fact": "Las organizaciones delictivas están utilizando agentes de inteligencia artificial para fabricar identidades falsas y coordinar ataques automatizados en Colombia",
+   "quote": "Las organizaciones delictivas están utilizando agentes de inteligencia artificial, IA, para fabricar identidades falsas, coordinar ataques automatizados y modificar sus estrategias de engaño de manera autónoma tras cada rechazo del sistema."
+  },
+  {
+   "id": 5,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "quote discusses AI governance and fraud prevention beyond just security",
+   "fact": "La seguridad es un tema crucial, con DataCrédito Experian trabajando en la gobernanza y prevención del fraude para proteger a los usuarios.",
+   "quote": "La seguridad es una de las principales preocupaciones alrededor de estas tecnologías. ¿Cómo puede garantizarse la protección de los clientes? Es una pregunta que tiene dos vertientes. La primera es la gobernanza de la inteligencia artificial, porque no se trata solamente de tecnología. También involucra un ecosistema ético. La inteligencia artificial toma decisiones a partir de lo que conoce y ha aprendido. Por eso, el monitoreo y el control de esas decisiones deben seguir siendo parte de su gobierno. La autonomía tecnológica puede avanzar, pero es necesario que exista confianza por parte del consumidor y que las decisiones tengan controles adecuados. La segunda vertiente es la prevención del fraude. La inteligencia artificial ha abierto puertas a nuevas modalidades, como los deepfakes y la suplantación de identidad. Puede facilitar escenarios de fraude que antes no se presentaban a la misma velocidad, pero también ofrece herramientas para prevenirlos y detectarlos. Por eso debemos trabajar conjuntamente en seguridad, tanto en las decisiones que toma la inteligencia artificial como en la prevención del fraude que puede afectar a los ciudadanos."
+  },
+  {
+   "id": 1,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "No menciona Ministerio TIC",
+   "fact": "Colombia tiene un Ministerio TIC y está en segundo lugar en Gobernanza y Ética de IA",
+   "quote": "Sus marcos normativos, su estrategia nacional y las políticas de datos abiertos le otorgan una agilidad institucional superior a sus vecinos, ubicándose en el segundo lugar en Gobernanza y Ética de IA."
+  },
+  {
+   "id": 10,
+   "label": 0,
+   "judge": true,
+   "judge_reason": "matches on AI in practice",
+   "fact": "La inteligencia artificial ya está pasando de las pruebas a la práctica en el sector salud",
+   "quote": "La inteligencia artificial dejó de ser una tecnología que las empresas apenas están explorando. Según una encuesta global de McKinsey presentada durante el encuentro, el 89% de las organizaciones ya utiliza IA en al menos una de sus áreas de trabajo. Además, cada vez más empresas están llevando estas herramientas a sus operaciones diarias."
+  },
+  {
+   "id": 41,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "permits vs eliminates worker choice",
+   "fact": "El proyecto de ley plantea cambios en la elección de administradoras de pensiones, permitiendo a los trabajadores decidir dónde invertir sus aportes",
+   "quote": "La propuesta busca eliminar esa obligatoriedad para que cada trabajador pueda decidir dónde quiere que se administren sus recursos, incluso cuando sus ingresos estén por debajo del umbral mencionado."
+  },
+  {
+   "id": 27,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "quote doesn't mention project return",
+   "fact": "El proyecto de reforma pensional fue devuelto por la Corte Constitucional",
+   "quote": "La Cámara de Representantes tramita sin modificaciones los 9 artículos devueltos por la Corte Constitucional y evita una conciliación con el Senado sobre el tiempo"
+  },
+  {
+   "id": 35,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "different number of articles",
+   "fact": "El proyecto de reforma tiene 17 artículos, incluyendo 14 que modifican la ley original",
+   "quote": "El proyecto de Forero tiene 17, uno de vigencia, dos de derogatorias y 14 que modifican la ley."
+  },
+  {
+   "id": 42,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "different time frames for transfers",
+   "fact": "La iniciativa también permite a los trabajadores cambiar de administradora cada cinco años, con doble asesoría",
+   "quote": "El traslado podría realizarse cada seis meses entre fondos privados, y entre Colpensiones y un fondo privado, cada cinco años, sin límite de edad y con doble asesoría."
+  },
+  {
+   "id": 34,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "unparseable judge reply",
+   "fact": "El proceso se completó rápidamente en las últimas horas",
+   "quote": "El proceso se resolvió con rapidez en las últimas horas y sin necesidad de una conciliación con el Senado, a diferencia de lo ocurrido con el Presupuesto General de 2027, que se cayó a última hora por falta de tiempo."
+  },
+  {
+   "id": 17,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "Year and currency added",
+   "fact": "Se registraron más de 765.000 reclamaciones por fraude en Colombia en 2025",
+   "quote": "Según datos de la banca colombiana, el sistema financiero registró más de 765.000 reclamaciones por fraude durante 2025, sumando pérdidas cuantiosas que superan los $967.000 millones."
+  },
+  {
+   "id": 43,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "quote discusses percentages, claim about conditions for pensioners",
+   "fact": "No se modifican las condiciones para quienes llegan a la edad de jubilación sin completar las semanas requeridas",
+   "quote": "No obstante, el porcentaje de cotización no tendría modificaciones. Continuaría en el 16 % del ingreso base de cotización, distribuido entre el empleador, que aporta el 75%, y el trabajador, responsable del 25%."
+  },
+  {
+   "id": 4,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "diferencia en el nivel de aumento",
+   "fact": "La industria crediticia colombiana está experimentando un aumento significativo en la adopción de la inteligencia artificial.",
+   "quote": "La inteligencia artificial comienza a ocupar un lugar cada vez más importante en la industria crediticia colombiana. Desde la evaluación de solicitudes y la atención al cliente hasta la prevención del fraude y la educación financiera, las nuevas herramientas tecnológicas están modificando la manera en que las entidades conocen a sus usuarios y toman decisiones de financiación."
+  },
+  {
+   "id": 30,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "Quote mentions fewer than ten proposals",
+   "fact": "Se revisaron y votaron diez propuestas de modificación a la reforma pensional",
+   "quote": "Debido a los vicios de procedimiento identificados, la Corte Constitucional ordenó a la Cámara revisar y someter a votación estas proposiciones, con el propósito de garantizar su adecuado trámite legislativo."
+  },
+  {
+   "id": 32,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "date and chamber not in quote",
+   "fact": "La reforma fue aprobada en la Cámara de Representantes el 25 de agosto de 2026",
+   "quote": null
+  },
+  {
+   "id": 2,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "Claim adds a number not in quote",
+   "fact": "La infraestructura digital de Colombia está en 50.2 puntos",
+   "quote": "Infraestructura digital. Nada nuevo, con 50.2 puntos en infraestructura, Colombia evidencia las restricciones de su red de conectividad."
+  },
+  {
+   "id": 26,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "different number of articles and no mention of Petro",
+   "fact": "El Congreso aprueba sin cambios la reforma pensional propuesta por Petro",
+   "quote": "La Cámara de Representantes tramita sin modificaciones los 9 artículos devueltos por la Corte Constitucional y evita una conciliación con el Senado sobre el tiempo"
+  },
+  {
+   "id": 24,
+   "label": 0,
+   "judge": true,
+   "judge_reason": "same goal of financial sustainability",
+   "fact": "La oposición presentará una contrarreforma para mejorar la sostenibilidad financiera",
+   "quote": "La oposición impulsa una contrarreforma enfocada en garantizar la sostenibilidad financiera del sistema y la libertad de elección del ciudadano."
+  }
+ ]
+}

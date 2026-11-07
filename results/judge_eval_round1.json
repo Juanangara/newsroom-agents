@@ -1,0 +1,160 @@
+{
+ "n_labelled": 49,
+ "base_rate_supported": 0.61,
+ "lexical (numbers + quote length)": {
+  "accepts": 39,
+  "precision": 0.69,
+  "recall": 0.9,
+  "false_accepts": 12
+ },
+ "judge alone": {
+  "accepts": 27,
+  "precision": 0.74,
+  "recall": 0.67,
+  "false_accepts": 7
+ },
+ "lexical AND judge": {
+  "accepts": 21,
+  "precision": 0.81,
+  "recall": 0.57,
+  "false_accepts": 4
+ },
+ "disagreements": [
+  {
+   "id": 27,
+   "label": 0,
+   "judge": true,
+   "judge_reason": "same meaning in different words",
+   "fact": "The government's reform project, if approved, will increase the fiscal deficit and compromise national savings.",
+   "quote": "El senador Andrés Forero advierte que el proyecto agravará el pasivo fiscal y comprometerá el ahorro nacional."
+  },
+  {
+   "id": 7,
+   "label": 0,
+   "judge": true,
+   "judge_reason": "Meanings align closely.",
+   "fact": "The alliance aims to create models that better understand Spanish, Portuguese, and indigenous languages, as well as the cultural and social aspects of the region.",
+   "quote": "Uno de sus objetivos es impulsar modelos capaces de comprender mejor el español, el portugués y las lenguas indígenas, así como las particularidades culturales y sociales de la región."
+  },
+  {
+   "id": 49,
+   "label": 0,
+   "judge": true,
+   "judge_reason": "same meaning within context",
+   "fact": "Permitirá a los trabajadores elegir su administradora de ahorros, eliminando la obligatoriedad de Colpensiones para ingresos menores a 2,3 salarios mínimos",
+   "quote": "La propuesta busca eliminar esa obligatoriedad para que cada trabajador pueda decidir dónde quiere que se administren sus recursos, incluso cuando sus ingresos estén por debajo del umbral mencionado."
+  },
+  {
+   "id": 34,
+   "label": 0,
+   "judge": true,
+   "judge_reason": "matches exactly",
+   "fact": "Ten proposed changes were reviewed but none were approved, leaving the original reform unchanged.",
+   "quote": "Ninguna fue aprobada, por lo que el texto de la reforma pensional permaneció sin modificaciones."
+  },
+  {
+   "id": 20,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "Year in claim differs from quote",
+   "fact": "El sector financiero colombiano registró más de 765,000 reclamaciones por fraude en 2025.",
+   "quote": "Según datos de la banca colombiana, el sistema financiero registró más de 765.000 reclamaciones por fraude durante 2025, sumando pérdidas cuantiosas que superan los $967.000 millones."
+  },
+  {
+   "id": 14,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "Wonderful entered in early 2026, not 2026",
+   "fact": "Wonderful entró a Colombia en 2026",
+   "quote": "Uno de ellos es Wonderful, una compañía de origen israelí que llegó al país a comienzos de 2026 con una propuesta enfocada en integrar esta tecnología a las operaciones de las organizaciones, más allá de los tradicionales chatbots y asistentes virtuales."
+  },
+  {
+   "id": 33,
+   "label": 0,
+   "judge": true,
+   "judge_reason": "both mention Constitutional Court ordering review",
+   "fact": "The Pension Reform was ordered to be amended by the Constitutional Court after procedural issues were identified.",
+   "quote": "Debido a los vicios de procedimiento identificados, la Corte Constitucional ordenó a la Cámara revisar y someter a votación estas proposiciones, con el propósito de garantizar su adecuado trámite legislativo."
+  },
+  {
+   "id": 15,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "Missing founding time in claim",
+   "fact": "Ha extendido su operación a 36 países",
+   "quote": "Fundada hace menos de dos años, Wonderful ha extendido sus operaciones a 36 países en los últimos ocho meses, incluido Colombia, donde busca aprovechar la creciente demanda empresarial de soluciones de automatización."
+  },
+  {
+   "id": 47,
+   "label": 0,
+   "judge": true,
+   "judge_reason": "same date for delayed effectiveness",
+   "fact": "The law will take effect on April 1, 2027",
+   "quote": "vigencia diferida al 1 de abril de 2027"
+  },
+  {
+   "id": 23,
+   "label": 0,
+   "judge": true,
+   "judge_reason": "Meanings align closely.",
+   "fact": "Criminals use AI to generate fake identities and coordinate automated attacks, putting traditional banking and fintech at risk.",
+   "quote": "Las organizaciones delictivas están utilizando agentes de inteligencia artificial, IA, para fabricar identidades falsas, coordinar ataques automatizados y modificar sus estrategias de engaño de manera autónoma tras cada rechazo del sistema."
+  },
+  {
+   "id": 36,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "Date and chamber names differ",
+   "fact": "The reform was approved in the Chamber of Representatives on August 25, 2026, following corrections to nine articles returned by the Constitutional Court.",
+   "quote": "El 25 de agosto de 2026, la Corte Constitucional aprobó buena parte de la reforma pensional que fue aprobada en 2024 en la Cámara de Representantes, pero devolvió nueve artículos porque no se discutieron las proposiciones desde el Senado, lo que causó una serie de demandas."
+  },
+  {
+   "id": 18,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "number of artists and event details differ",
+   "fact": "The event features works created by 22 artists using technology, including Artificial Intelligence (AI).",
+   "quote": "Este jueves 5 de noviembre, en el marco de la Feria del Millón, abrirá este lugar especial donde 22 artistas trabajan sus obras desde la tecnología"
+  },
+  {
+   "id": 45,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "different number of articles",
+   "fact": "The Corte Constitucional, Sala Plena declared 93 out of 95 articles executable",
+   "quote": "Exequibilidad de 93 de los 95 artículos por los vicios examinados; devolución de 9 disposiciones y 1 proposición"
+  },
+  {
+   "id": 19,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "focuses on authorship, not replacement by AI",
+   "fact": "The exhibition explores the impact of technology on art, questioning whether traditional painting is being replaced by new forms of expression.",
+   "quote": "Sobre el punto inicial, muchísimo antes de esta avalancha de IA, los artistas contemporáneos han recurrido a ayudas externas para decir lo que quieren decir. ¿De quién es la obra, de quien la pensó o de quien la hizo?"
+  },
+  {
+   "id": 31,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "Claim adds details not in quote",
+   "fact": "The reform will modify the Colombian pension system, providing benefits like reduced work weeks for eligibility and a bonus for grandparents without pensions.",
+   "quote": "Las mujeres se pensionarán con menos semanas de cotización, no aumenta edad de pensión para nadie, habrá bono pensional para abuelos sin pensión, quienes tengan edad y no alcancen semanas se pensionarán mientras terminan de cotizar y muchos otros beneficios para el pueblo. Se garantiza una vejez digna y no el negocio de los fondos privados de pensiones"
+  },
+  {
+   "id": 16,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "Claim adds number of clients and country",
+   "fact": "Planea tener 60 clientes en Colombia por fin de 2026",
+   "quote": "Consuegra señaló que la operación bajo su responsabilidad, que comprende la Región Andina, Centroamérica y el Caribe, tiene como objetivo superar los 60 clientes al cierre de 2026. Se trata de una meta regional, no exclusivamente colombiana."
+  },
+  {
+   "id": 2,
+   "label": 1,
+   "judge": false,
+   "judge_reason": "adds 'populismo' not in quote",
+   "fact": "Falta de infraestructura digital y baja inversión privada en IA son desafíos",
+   "quote": "Infraestructura digital. Nada nuevo, con 50.2 puntos en infraestructura, Colombia evidencia las restricciones de su red de conectividad. Desarrollar y adaptar modelos avanzados de IA requiere una capacidad de supercomputo, redes de fibra óptica y 5G con las que el país aún no cuenta a escala masiva. Sin centros de datos soberanos ni capacidad de cómputo accesible, se encarece la innovación local. Una larga historia de populismo en el sector de las telecomunicaciones ha retrasado el éxito en este sector."
+  }
+ ]
+}
